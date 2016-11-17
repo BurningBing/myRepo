@@ -1,0 +1,281 @@
+/* -------------------------------------------------------------------
+PRINT FORMAT
+---------------------------------------------------------------------- */
+@import url('alis-print.css');
+
+.SelectSessionLink {  
+   font-family: Arial, Helvetica, sans-serif;
+	font-size: 95%;
+	text-decoration:none;
+	color:#D6DFEF;
+
+}
+a.SelectSessionLink:hover {  color:#D6DFEF;
+	text-decoration:underline;
+	}
+.GreyBackground {  color: #000000; background-color:#DDDDDD; }
+.ContentPageTitle {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 95%;
+	font-weight: bold;
+	color: #162A81;
+	background-color: #FFFFFF;
+	background-position: center;
+	border: #FFFFFF;
+}
+.ContentPageTitleSmall {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 82%;
+	font-weight: bold;
+	color: #162A81;
+	background-color: #FFFFFF;
+	background-position: center;
+	border: #FFFFFF;
+}
+.Warning {  font-family: Arial, Helvetica, sans-serif; font-size: 150%; color: #FF0000; font-weight: bold}
+.AlisBlueBackground {  background-color: #162A81}
+.ContentAreaBackground { background-color: #FFFFFF}
+.TableBorder {
+	border: #FFFFFF;
+}
+.TableHeaderBackground {
+	background-color: #999999;
+}
+.WhiteBackground {
+	background-color: #FFFFFF;
+}
+.AlisTodayBold {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 90%;
+	font-weight: bold;
+}
+.AlisToday {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 90%;
+}
+.AlisTodayHeaderCol {
+	background-color: #999999;
+	border-bottom-width: thin;
+	border-bottom-style: solid;
+	border-bottom-color: #000000;
+
+}
+.AlisTodayInfoCol {
+	background-color: #DDDDDD;
+	border-bottom-width: thin;
+	border-bottom-style: solid;
+	border-bottom-color: #000000;
+
+}
+.AlisTodayWarning {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 82%;
+	font-weight: bold;
+	color: #FF0000;
+}
+.InactiveItem {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 82%;
+	color: #266BB7;
+	font-weight: bold;
+}
+.AlisLink {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 90%;
+	font-weight: bold;
+	text-decoration: none;
+	color: #266BB7;
+	border: none;
+}
+.AgendaCurrentBill {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 82%;
+	font-weight: bold;
+	color: #266BB7;
+
+}
+body {
+	margin:0;
+	background-image:url(/alisImages/bg_pic.gif);
+	background-repeat:repeat-x;
+	background-color: #F2F2F2;
+	color: #000000;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 95%;
+}
+
+td {
+	margin:0;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 95%;
+}
+
+th {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 95%;
+}
+
+.bodystyle {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 95%;
+}
+
+.small {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 82%;
+}
+
+.medium {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 95%;
+}
+
+.big {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 100%;
+}
+
+.xbig {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 140%;
+}
+
+.expanded {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 82%;
+	line-height: 24px;
+	letter-spacing: 2px;
+}
+
+.justified {
+	font-family: Arial, Helvetica, sans-serif;
+	text-align: justify;
+}
+
+.footer {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 82%;
+	color: #999999;
+}
+
+.box1 {
+	padding: 3px;
+	border-width: medium;
+	border-style: solid;
+	border-color: #CCCCCC #666666 #666666 #CCCCCC;
+}
+
+.box2 {
+	font-style: italic;
+	word-spacing: 2pt;
+	padding: 3px;
+	border: 0px;
+}
+
+.nobr {
+	white-space: nowrap;
+}
+.Announcement {  font-family: Arial, Helvetica, sans-serif; color: #FF0000; font-weight: bold}
+/* -------------------------------------------------------------------
+P A G E - E L E M E N T S
+---------------------------------------------------------------------- */
+h1{ 
+	font:bold 82%/115% Verdana, Arial,Geneva,Helvetica,sans-serif;
+	color: #3E597B;
+	padding:0px 0 0px 0px;
+	margin:0 0 0 0;
+}
+h2{ 
+	font:bold 82%/115% Verdana, Arial,Geneva,Helvetica,sans-serif;
+	color: #3E597B;
+	padding:0px 0 0px 0px;
+	margin:0 0 0 0;
+}
+h3{ 
+		font-family: Arial, Helvetica, sans-serif;
+	font-size: 82%;
+}
+h4{ 
+	font:bold 100%/115% Verdana, Arial,Geneva,Helvetica,sans-serif;
+	color: #3E597B;
+	padding:0px 0 0px 0px;
+	margin:0 0 0 0;
+}
+h5{ 
+	font:bold 95%/115% Verdana, Arial,Geneva,Helvetica,sans-serif;
+	color: #3E597B;
+	padding:0px 0 0px 0px;
+	margin:0 0 0 0;
+}
+h6{ 
+	font:bold 95%/115%  Verdana, Arial,Geneva,Helvetica,sans-serif;
+	color: #3E597B;
+	padding:0px 0 0px 0px;
+	margin:0 0 0 0;
+}
+h7{ 
+	font: 12px/18px Verdana, Arial,Geneva,Helvetica,sans-serif;
+	color: #0A387E;
+	padding:0px 0 0px 0px;
+	margin:0 0 0 0;
+}
+p{ 
+	font:100%/100% Verdana, Arial,Geneva,Helvetica,sans-serif;
+	color: #000;
+	padding:0px 0px 0px 0px;
+	margin:0 0 0 0;
+}
+br{
+	line-height:14px;
+}
+
+/* -------------------------------------------------------------------
+L I N K S
+---------------------------------------------------------------------- */
+a{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 100%;
+	color:#266BB7;
+}
+a:visited	{ 
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 90%;
+	color: #43ADD6; 
+}
+a.Warning:visited	{ 
+font-family: Arial, Helvetica, sans-serif; font-size: 150%; color: #FF0000; font-weight: bold}
+.AlisBlueBackground {  background-color: #162A81}
+.ContentAreaBackground { background-color: #FFFFFF}
+.TableBorder {
+	border: #FFFFFF;
+}
+
+a:hover{
+	text-decoration:none;
+	color:#266BB7;
+}
+a.footer{
+	font:90% Verdana, Arial,Geneva,Helvetica,sans-serif;
+	color:#CAC4C4;
+}
+a.footer:hover{
+	text-decoration:none;
+	color:#000000;
+}t
+
+a.session{
+	text-decoration:none;
+	color:#D6DFEF;
+}t
+a.session:hover{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 90%;
+	text-decoration:underline;
+	color:#D6DFEF;
+}t
+.NewText {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 100%;
+	font-weight: bold;
+	color: #FF0000;
+}

@@ -1,0 +1,13 @@
+package com.thinkgem.jeesite.test;
+
+import com.fastcase.services._2009._03._06.ResearchServicesStub.LibraryDocument;
+import com.thinkgem.jeesite.common.webservice.WBNonCaseUtils;
+
+public class TestWebService {
+	
+	public static void main(String[] args) throws Exception {
+		LibraryDocument dom = WBNonCaseUtils.findNonCaseById("51067477");
+		System.out.println(dom.getShortName());
+		
+	}
+}

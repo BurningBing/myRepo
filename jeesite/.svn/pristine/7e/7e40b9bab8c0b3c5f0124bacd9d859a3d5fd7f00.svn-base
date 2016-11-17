@@ -1,0 +1,73 @@
+@CHARSET "UTF-8";
+
+/* 显示通用界面*/
+.common-panel{
+    width: 600px;
+    height: 600px;
+    box-shadow: 0 0 5px;
+    background-color: rgba(243, 243, 243, 0.75);
+    border-radius: 5px;
+    position: absolute;
+    top: 50px;
+    left: calc(50% - 300px);
+    display: flex;
+    flex-direction: column;
+}
+
+/* 窗体头部*/
+.common-title{
+    flex: 0 0 30px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+.common-title-name{
+    height: 24px;
+    display: flex;
+    padding-left: 20px;
+    flex: 1;
+    justify-content: flex-start;
+    align-items: center;
+    color: #606060;
+    font-weight: bold;
+}
+.minBtn{
+    float: left;
+    width: 24px;
+    height: 24px;
+    background-image: url("../image/common/min.png");
+    background-position: 4px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+.minBtn:hover{
+    background-color: #D1D1D1;
+    box-shadow: 0 0 5px #666666;
+    border-radius: 5px;
+}
+.closeBtn{
+	margin-right: 5px;
+    float: left;
+    width: 24px;
+    height: 24px;
+    background-image: url("../image/common/cls.png");
+    background-position: 4px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+.closeBtn:hover{
+    background-color: #D1D1D1;
+    box-shadow: 0 0 5px #666666;
+    border-radius: 5px;
+}
+/* 窗体主干*/
+.common-body{
+    flex: 1;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    display: flex;
+    height: 100%;
+    overflow:hidden;
+}

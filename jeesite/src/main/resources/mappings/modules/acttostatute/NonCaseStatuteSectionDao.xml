@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.acttostatute.dao.NonCaseStatuteSectionDao">
+    
+	<sql id="nonCaseStatuteSectionColumns">
+		a.id AS "id",
+		a.content_type AS "contentType",
+		a.library_name AS "libraryName",
+		a.state AS "state",
+		a.caption AS "caption",
+		a.description AS "description",
+		a.source_note_link AS "sourceNoteLink",
+		a.short_name AS "shortName",
+		a.revision_history AS "revisionHistory",
+		a.update_type AS "updateType",
+		a.effective_date AS "effectiveDate",
+		a.expiration_date AS "expirationDate",
+		a.date_enacted AS "dateEnacted",
+		a.act_number AS "actNumber",
+		a.create_time AS "createTime",
+		a.status as "status",
+		a.download_time as "downloadTime",
+		a.export_time as "exportTime",
+		a.qa as "qa",
+		a.remark as "remark",
+		a.content AS "content"
+	</sql>
+	
+	<sql id="nonCaseStatuteSectionJoins">
+	</sql>
+    
+	<select id="get" resultType="NonCaseStatuteSection">
+		SELECT 
+			<include refid="nonCaseStatuteSectionColumns"/>
+		FROM non_case_statute_section a
+		<include refid="nonCaseStatuteSectionJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="NonCaseStatuteSection">
+		SELECT 
+			<include refid="nonCaseStatuteSectionColumns"/>
+		FROM non_case_statute_section a
+		<include refid="nonCaseStatuteSectionJoins"/>
+		WHERE 1=1
+		   <if test="id != null and id != ''">
+				AND a.id = #{id}
+			</if>
+			<if test="state != null and state != ''">
+				AND a.state =#{state}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status =#{status}
+			</if>
+			<if test="shortName != null and shortName != ''">
+				AND a.short_name =#{shortName}
+			</if>
+			<if test="actNumber != null and actNumber != ''">
+				AND a.act_number =#{actNumber}
+			</if>
+			<if test="beginDate != null and beginDate != ''">
+				AND a.create_time BETWEEN #{beginDate} AND #{endDate}
+			</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY status desc
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="NonCaseStatuteSection">
+		SELECT 
+			<include refid="nonCaseStatuteSectionColumns"/>
+		FROM non_case_statute_section a
+		<include refid="nonCaseStatuteSectionJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getRepetitionSection" resultType="NonCaseStatuteSection">
+		select t.id,t.state,t.short_name,t.act_number,t.update_type
+  			from non_case_statute_section t
+		 where t.short_name in (select short_name
+                          from non_case_statute_section t
+                         where t.status = 'Waiting'
+                         and t.qa = #{qa}
+                         and t.update_type!='New'
+                         group by t.short_name, t.state
+                        having count(1) > 1)
+                        and t.status = 'Waiting'
+                        order by t.short_name
+	</select>
+	
+	
+	<select id="findByState" resultType="map">
+		select t.state, t.day, count(1) as act_count
+			  from non_case t
+			 where  t.day =#{day}
+			 group by t.day, t.state
+	</select>
+	
+	<select id="findActs" resultType="map">
+		select t.state,
+		       t.act_number,
+		       t.day,
+		       t.signer,
+		       f.section_count,
+		       nvl(s.complete_section, 0) as complete_section
+		  from non_case t
+		  left join v_a2s_section_count f
+		    on t.id = f.case_id
+		  left join v_a2s_complete_section s
+		    on t.act_number = s.act_number
+		   and t.state = s.state
+		 where t.day = #{day}
+		 and t.state=#{state}
+	</select>
+	
+	<select id="findSection" resultType="map">
+		select s.state,
+		       s.caption,
+		       s.description,
+		       s.update_type,
+		       s.effective_date,
+		       s.expiration_date,
+		       s.act_number,
+		       s.short_name,
+		       s.export_time,
+		       s.qa
+		  from non_case_statute_section s
+		  left join non_case t
+		    on t.state = s.state
+		   and t.act_number = s.act_number
+		 where t.day = #{day}
+		 and t.state=#{state}
+		 and t.act_number=#{actNumber}
+	</select>
+	
+	<select id="countSection" resultType="NonCaseStatuteSection">
+		select t.state,act_number, count(1) as count_num
+		  from non_case_statute_section t
+		 where t.status = 'Waiting'
+		 and t.qa = #{qa}
+		 group by t.act_number,t.state
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO non_case_statute_section(
+			id,
+			content_type,
+			library_name,
+			state,
+			caption,
+			description,
+			source_note_link,
+			short_name,
+			revision_history,
+			update_type,
+			effective_date,
+			expiration_date,
+			date_enacted,
+			act_number,
+			file_name,
+			status,
+			download_time,
+			export_time,
+			qa,
+			content
+		) VALUES (
+			NON_CASE_STATUTE_SECTION_SEQ.nextval,
+			#{contentType},
+			#{libraryName},
+			#{state},
+			#{caption},
+			#{description},
+			#{sourceNoteLink},
+			#{shortName},
+			#{revisionHistory},
+			#{updateType},
+			#{effectiveDate},
+			#{expirationDate},
+			#{dateEnacted},
+			#{actNumber},
+			#{fileName},
+			#{status},
+			#{downloadTime},
+			#{exportTime},
+			#{qa},
+			#{content}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE non_case_statute_section SET 	
+			content_type = #{contentType},
+			library_name = #{libraryName},
+			state = #{state},
+			caption = #{caption},
+			description = #{description},
+			source_note_link = #{sourceNoteLink},
+			short_name = #{shortName},
+			revision_history = #{revisionHistory},
+			update_type = #{updateType},
+			effective_date = #{effectiveDate},
+			expiration_date = #{expirationDate},
+			date_enacted = #{dateEnacted},
+			act_number = #{actNumber},
+			status=#{status},
+			remark=#{remark},
+			qa=#{qa},
+			content = #{content}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM non_case_statute_section
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updatePassed">
+	update non_case_statute_section t
+	   set t.status = 'Passed'
+	 where t.qa =#{qa}
+	   and t.status ='Waiting'
+	</update>
+</mapper>

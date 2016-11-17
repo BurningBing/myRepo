@@ -1,0 +1,226 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.PushbackInputStream;
+
+import com.alibaba.druid.sql.visitor.functions.Char;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+
+
+
+public class TestCompare {
+	static boolean tagStart = false;
+	static boolean tagEnd = false;
+	static StringBuffer sb1 = new StringBuffer();
+	static StringBuffer sb2 = new StringBuffer();
+	static PushbackInputStream inputStream1 = null;
+	static PushbackInputStream inputStream2 = null;
+	static int tagNumber=0;
+	
+	
+	
+	public static void main(String[] args) throws IOException {
+		String str1 = "<font color=\"#f00\"><u>s</u></font> 15-2-201 and <font color=\"#f00\"><strike>section </strike></font> 15-2-202,<font color=\"#f00\"><strike>of this code</strike><u>Idaho Code</u></font> ,property received from the decedent and owned by the surviving spouse at the decedent's death,plus the value of such property transferred by the surviving spouse at any time during marriage to any person other than the decedent which would have been in the surviving spouse's quasi-community property augmented estate if that spouse had predeceased the decedent to the extent that the owner's transferred property is derived from the decedent by any means other than testate or intestate succession without a full consideration in money or money<font color=\"#f00\"><u>'</u></font> s worth. This shall not include any benefits derived from the federal social security system by reason of service performed or disability incurred by the decedent and shall include property transferred from the decedent to the surviving spouse by virtue of joint ownership and through the exercise of a power of appointment also exercisable in favor of others than the surviving spouse and appointed to the surviving spouse.";
+		String str2 = "<font color=\"#f00\"><u>s</u></font> 15-2-201 and <font color=\"#f00\"><strike>section </strike></font>15-2-202, <font color=\"#f00\"><strike>of this code</strike> <u>Idaho Code</u></font>, property received from the decedent and owned by the surviving spouse at the decedent's death, plus the value of such property transferred by the surviving spouse at any time during marriage to any person other than the decedent which would have been in the surviving spouse's quasi-community property augmented estate if that spouse had predeceased the decedent to the extent that the owner's transferred property is derived from the decedent by any means other than testate or intestate succession without a full consideration in money or money's worth. This shall not include any benefits derived from the federal social security system by reason of service performed or disability incurred by the decedent and shall include property transferred from the decedent to the surviving spouse by virtue of joint ownership and through the exercise of a power of appointment also exercisable in favor of others than the surviving spouse and appointed to the surviving spouse.";
+		inputStream1 = new PushbackInputStream(new ByteArrayInputStream(str1.trim().getBytes()),16000);
+		inputStream2 = new PushbackInputStream(new ByteArrayInputStream(str2.trim().getBytes()),16000);
+//		while(true){
+//			System.out.println(getNext(inputStream1));
+//		}
+		while(true){
+			String t1 = getNext(inputStream1);
+			String t2 = getNext(inputStream2);
+			if(t1.isEmpty()&&t2.isEmpty()){
+				break;
+			}
+			if(!t1.equals(t2)){
+				mark(t1, t2);
+			}else{
+				sb1.append(t1);
+				sb2.append(t2);
+			}
+		}
+		System.out.println("<p>"+sb1.toString()+"</p>");
+		System.out.println("<p>"+sb2.toString()+"</p>");
+	}
+	
+	public static void mark(String str1, String str2) throws IOException{
+		//去标签检查是否为线的差异
+		if(RegexUtil.replace("<[^>]*?>", "", str1).equals(RegexUtil.replace("<[^>]*?>", "", str2))){
+			str1 = RegexUtil.replace("(<[^/]*>)?([^<>]+)(</.*)?", "$1<span style='background-color:yellow'>$2</span>$3", str1);
+			str2 = RegexUtil.replace("(<[^/]*>)?([^<>]+)(</.*)?", "$1<span style='background-color:yellow'>$2</span>$3", str2);
+			sb1.append(str1);
+			sb2.append(str2);
+			return ;
+		}
+		
+		
+		
+		PushbackInputStream in1 = new PushbackInputStream(new ByteArrayInputStream(str1.getBytes()));
+		PushbackInputStream in2 = new PushbackInputStream(new ByteArrayInputStream(str2.getBytes()));
+		while(!isEoi(in1)&&!isEoi(in2)){
+			int c1 = in1.read();
+			int c2 = in2.read();
+			if(c1==c2){
+				sb1.append((char)c1);
+				sb2.append((char)c2);
+			}else if(c1==60&&c2==32){
+				sb1.append("<span style='background-color:yellow'>[]</span>"+(char)c1);
+				sb2.append("<span style='background-color:yellow'>[ ]</span>"+(char)in2.read());
+			}else if(c1==32&&c2==60){
+				sb1.append("<span style='background-color:yellow'>[ ]</span>"+(char)in1.read());
+				sb2.append("<span style='background-color:yellow'>[]</span>"+(char)c2);
+			}else if(c1==32){
+				sb2.append("<span style='background-color:yellow'>[]</span>"+(char)c2);
+				while(!isEoi(in2)){
+					sb2.append((char)in2.read());
+				}
+				sb1.append("<span style='background-color:yellow'>[ ]</span>"+getNext(inputStream1));
+			}else if(c2==32){
+				sb1.append("<span style='background-color:yellow'>[]</span>"+(char)c1);
+				while(!isEoi(in1)){
+					sb1.append((char)in1.read());
+				}
+				sb2.append("<span style='background-color:yellow'>[ ]</span>"+getNext(inputStream2));
+			}else{
+				//以1为准向下查找5个分词，查看是否有匹配项
+				String words = "";
+				boolean find = false;
+				for(int i=0;i<5;i++){
+					String temp = getNext(inputStream2);
+					words +=temp;
+					if(str1.equals(temp)){
+						find = true;
+						break;
+					}
+				}
+				if(find){
+					sb1.append("<span style='background-color:yellow'>"+str1+"</span>");
+					sb2.append("<span style='background-color:yellow'>"+words+"</span>");
+					return;
+				}
+				inputStream2.unread(words.getBytes());
+				words = "";
+				for(int i=0;i<5;i++){
+					String temp = getNext(inputStream1);
+					words +=temp;
+					if(str2.equals(temp)){
+						find = true;
+						break;
+					}
+				}
+				if(find){
+					sb1.append("<span style='background-color:yellow'>"+str1+words+"</span>");
+					sb2.append("<span style='background-color:yellow'>"+str2+"</span>");
+					return;
+				}
+				inputStream1.unread(words.getBytes());
+				
+				sb1.append("<span style='background-color:yellow'>"+(char)c1);
+				sb2.append("<span style='background-color:yellow'>"+(char)c2);
+				if(peek(in1)==c2){
+					sb1.append((char)in1.read()+"</span>");
+					sb2.append("]</span>");
+				}else if(peek(in2)==c1){
+					sb1.append("]</span>");
+					sb2.append((char)in2.read()+"</span>");
+				}
+			}
+		}
+		if(!isEoi(in1)){
+			sb1.append("<span style='background-color:yellow'>[");
+			sb2.append("<span style='background-color:yellow'>[");
+			int t = -1;
+			while((t=in1.read())!=-1){
+				sb1.append((char)t);
+			}
+			sb1.append("]</span>");
+			sb2.append("]</span>");
+		}
+		if(!isEoi(in2)){
+			sb1.append("<span style='background-color:yellow'>[");
+			sb2.append("<span style='background-color:yellow'>[");
+			int t = -1;
+			while((t=in2.read())!=-1){
+				sb2.append((char)t);
+			}
+			sb1.append("]</span>");
+			sb2.append("]</span>");
+		}
+	}
+	
+	
+	
+	
+	public static String getNext(PushbackInputStream in) throws IOException{
+		int pos = 0;
+		boolean tagStart = false;
+		boolean tagEnd = false;
+		int tagNumber = 0;
+		StringBuffer sb = new StringBuffer();
+		int i=0;
+		while((i=in.read())!=-1){
+			pos++;
+			if(i==60){
+				if(peek(in)==47){
+					tagNumber--;
+					if(tagNumber==0){
+						tagEnd = true;
+						tagStart = false;
+					}
+				}else{
+					String t = RegexUtil.replace("<[^>]*?>", "", sb.toString());
+					if(!t.isEmpty()&&tagNumber==0){
+						pos--;
+						in.unread(i);
+						break;
+					}
+					
+					tagStart = true;
+					tagEnd = false;
+					tagNumber++;
+				}
+			}else if(i==62){
+				if(tagNumber==0&&tagEnd&&!tagStart){
+					sb.append((char)i);
+					if(peek(in)==32){
+						sb.append((char)in.read());
+					}
+					break;
+				}
+			}
+			sb.append((char)i);
+		}
+		String str = sb.toString();
+		if(!RegexUtil.isFind("<[^>]*?>", str)){
+			byte[] buff = str.getBytes();
+			str = RegexUtil.match(".*?(\\s|$)", str);
+			int l = str.length();
+			in.unread(buff,l,pos-l);
+			return str;
+		}else{
+			return sb.toString();
+		}
+	}
+	
+	public static int peek(PushbackInputStream in) throws IOException{
+		int i= in.read();
+		in.unread(i);
+		return i;
+	}
+	public static boolean isEoi(PushbackInputStream in) throws IOException{
+		int b = -1;
+		if((b=in.read())==-1){
+			return true;
+		}else{
+			in.unread(b);
+			return false;
+		}
+	}
+	
+	
+	
+	
+	
+}

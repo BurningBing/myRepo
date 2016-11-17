@@ -1,0 +1,139 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.ats.service;
+
+import java.util.List;
+
+import org.activiti.engine.impl.util.json.JSONArray;
+import org.activiti.engine.impl.util.json.JSONObject;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+import com.thinkgem.jeesite.modules.ats.dao.AtsSectionDao;
+import com.thinkgem.jeesite.modules.ats.entity.AtsAct;
+import com.thinkgem.jeesite.modules.ats.entity.AtsSection;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * sectionService
+ * @author Chad
+ * @version 2016-03-24
+ */
+@Service
+@Transactional(readOnly = true)
+public class AtsSectionService extends CrudService<AtsSectionDao, AtsSection> {
+
+	public AtsSection get(String id) {
+		return super.get(id);
+	}
+	
+	public List<AtsSection> findList(AtsSection atsSection) {
+		return super.findList(atsSection);
+	}
+	
+	public Page<AtsSection> findPage(Page<AtsSection> page, AtsSection atsSection) {
+		return super.findPage(page, atsSection);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(AtsSection atsSection) {
+		super.save(atsSection);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(AtsSection atsSection) {
+		super.delete(atsSection);
+	}
+	
+	public int findMaxParseOrder(String pid){
+		Integer parseOrder = super.dao.findMaxParseOrder(pid);
+		return parseOrder ==null?0:parseOrder+1;
+	}
+	
+	@Transactional(readOnly = false)
+	public AtsSection addNewSection(int parseOrder,String shortName,AtsAct act){
+		AtsSection section = new AtsSection();
+		section.setBillNumber(act.getBillNumber());
+		section.setCaption(act.getBillNumber());
+		section.setContent(Global.getHtmlPath(act.getState())+act.getBillNumber()+"("+parseOrder+").html");
+		section.setEff(act.getEffectiveDate());
+		section.setParseOrder(parseOrder);
+		section.setPid(Integer.parseInt(act.getId()));
+		section.setRemarks("Add by editor");
+		section.setShortName(shortName+act.getBillNumber());
+		section.setUpdateType(1);
+		section.setEditor(UserUtils.getUser().getName());
+		section.setIsAdd(1);
+		save(section);
+		return section;
+	}
+
+	@Transactional(readOnly = false)
+	public boolean modifyKeyInforBatch(AtsSection section){
+		try {
+			super.dao.modifyKeyInforBatch(section);
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+	}
+
+	@Transactional(readOnly = false)
+	public JSONArray repealBach(String value,AtsAct act,String shortName){
+		JSONArray array = new JSONArray();
+		String[] captions = value.split(",");
+		for(int i=0;i<captions.length;i++){
+			JSONObject json = new JSONObject();
+			int parseOrder = findMaxParseOrder(act.getId());
+			String caption = captions[i];
+			caption = RegexUtil.replace("§", "&#167;", captions[i]);
+			AtsSection section = new AtsSection();
+			section.setBillNumber(act.getBillNumber());
+			section.setCaption(caption);
+			section.setContent(Global.getHtmlPath(act.getState())+act.getBillNumber()+"("+parseOrder+").html");
+			section.setEff(act.getEffectiveDate());
+			section.setParseOrder(parseOrder);
+			section.setPid(Integer.parseInt(act.getId()));
+			section.setRemarks("Add by editor");
+			section.setShortName(shortName+RegexUtil.replace("Section ", "", caption).trim());
+			section.setUpdateType(3);
+			section.setEditor(UserUtils.getUser().getName());
+			section.setIsAdd(1);
+			save(section);
+			json.put("name", section.getCaption());
+			json.put("type", 3);
+			json.put("isParent", false);
+			json.put("pid", act.getId());
+			json.put("id", section.getId());
+			json.put("infor", section.toJson());
+			if(act.getType()==1){
+				json.put("actType", "act");
+			}else{
+				json.put("actType", "html");
+			}
+			json.put("", value);
+			array.put(json);
+		}
+		return array;
+	}
+
+	public int findUnsubmitCount(String id){
+		return super.dao.findUnsubmitCount(id);
+	}
+	
+	public List<AtsSection> findCompareSections(AtsSection section){
+		return super.dao.findCompareSections(section);
+	}
+
+	public AtsSection findCompareSection(int pid, String shortName, String editor){
+		return super.dao.findCompareSection(pid,shortName,editor);
+	}
+	
+}

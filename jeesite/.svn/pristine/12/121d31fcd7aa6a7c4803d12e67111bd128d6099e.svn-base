@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsMessageDao">
+    
+	<sql id="atsMessageColumns">
+		a.id AS "id",
+		a.from_user AS "fromUser",
+		a.to_user AS "toUser",
+		a.send_time AS "sendTime",
+		a.content AS "content",
+		a.is_read AS "isRead"
+	</sql>
+	
+	<sql id="atsMessageJoins">
+	</sql>
+    
+	<select id="get" resultType="AtsMessage">
+		SELECT 
+			<include refid="atsMessageColumns"/>
+		FROM ats_message a
+		<include refid="atsMessageJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AtsMessage">
+		SELECT 
+			<include refid="atsMessageColumns"/>
+		FROM ats_message a
+		<include refid="atsMessageJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AtsMessage">
+		SELECT 
+			<include refid="atsMessageColumns"/>
+		FROM ats_message a
+		<include refid="atsMessageJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO ats_message(
+			id,
+			from_user,
+			to_user,
+			send_time,
+			content,
+			is_read
+		) VALUES (
+			seq_message.nextval,
+			#{fromUser},
+			#{toUser},
+			#{sendTime},
+			#{content},
+			#{isRead}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_message SET 	
+			from_user = #{fromUser},
+			to_user = #{toUser},
+			send_time = #{sendTime},
+			content = #{content},
+			is_read = #{isRead}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM ats_message
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

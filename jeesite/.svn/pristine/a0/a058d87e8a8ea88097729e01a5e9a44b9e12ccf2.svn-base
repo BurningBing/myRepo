@@ -1,0 +1,54 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.File;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.io.SAXReader;
+
+import com.thinkgem.jeesite.common.utils.JDBCUtils;
+
+public class TestRepeatShortName {
+	public static void main(String[] args) {
+		File folder = new File("E:\\export\\20160422\\Idaho");
+		File[] subFolders = folder.listFiles();
+		List<String> list = new ArrayList<String>();
+		List<String> repeat  = new ArrayList<String>();
+		for(File subFolder:subFolders){
+			String billNumber = subFolder.getName();
+			File[] files = subFolder.listFiles();
+			for(File file:files){
+				SAXReader reader = new SAXReader();
+				try {
+					Document dom = reader.read(file);
+					String shortName = dom.getRootElement().element("Indexes").element("Index").elementText("ShortName");
+					if(list.contains(shortName)){
+						repeat.add(shortName);
+					}else{
+						list.add(shortName);
+					}
+				} catch (DocumentException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		for(String st:repeat){
+			String sql = "select a.bill_number,s.short_name from ats_section s left join ats_act a on s.pid = a.id where s.short_name= '"+st+"' and a.day = '20160422' and a.state = 'Idaho'";
+			System.out.println(sql);
+			ResultSet rs = JDBCUtils.query(sql);
+			try {
+				while(rs.next()){
+					System.out.println(rs.getString(1)+":"+rs.getString(2));
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			System.out.println("***************");
+		}
+		
+	}
+}

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test Table Editor</title>
+	<meata charset="utf-8">
+	<style type="text/css">
+		html,body{
+			margin: 0;width: 100%;height: 100%
+		}
+		table{
+			border: 1px solid #ccc;cursor: default;
+			margin: 20px auto;
+		}
+		td,th{
+			border:1px solid #ccc;	
+		}
+		textarea{
+			width: 98%;height: 98%;border: none;font-size: 17px;padding: 0;resize: none;outline: none;
+			transform: translate(1%, 1%);
+		}
+
+		.table-editor{
+			width: 98%;height: 96%;border: 1px solid #ccc;transform: translate(1%, 2%);
+		}
+		/*椤堕儴鍖哄煙*/
+		.input-panel{
+			height: calc(60% - 20px);display: flex;
+		}
+		.input-panel>div{
+			height: 100%;
+			flex: 1;
+		}
+
+		/*涓棿鎸夐挳鍖哄煙*/
+		.button-panel{
+			height: 40px;line-height: 40px;border-top: 1px solid #ccc;border-bottom: 1px solid #ccc;
+			display: flex;
+		}
+
+		/*涓嬫柟鏄剧ず鍖哄煙*/
+		.display-panel{
+			height: calc(40% - 20px);display: flex;
+		}
+		.display-panel>div{
+			flex: 1;
+		}
+		#code{
+			border: 1px solid #ccc;
+		}
+
+		/*鍏朵粬鏍峰紡*/
+		.selected{
+			background-color: yellow;
+		}
+	</style>
+	<script type="text/javascript">
+		function _id(id){
+			return document.getElementById(id);
+		}
+
+		// 鐢熸垚琛ㄦ牸
+		function generate()
+		{
+			var str = _id("text-input").value;
+			if(str.indexOf("<table")>=0){
+				_id("tab").innerHTML = "";
+				_id("tab").innerHTML = str;
+			}else{
+				var trs = str.split("\n");
+				var table = document.createElement("table");
+				table.id = "table";
+				table.cellPadding = "8px";
+				table.cellSpacing = "0";
+				
+				for(var i=0;i<trs.length;i++){
+					var oTr = document.createElement("tr");
+					var sTr = trs[i];
+					var tds = sTr.split("  ");
+					for(var j=0;j<tds.length;j++){
+						var oTd = document.createElement("td");
+						oTd.innerHTML = tds[j];
+						oTr.appendChild(oTd);
+					}
+					table.appendChild(oTr);
+				}
+				_id("tab").innerHTML = "";
+				_id("tab").appendChild(table);
+				
+			}
+			var table = _id("table");
+			table.onselectstart = function(){
+				return false;
+			}
+			table.onmousedown = function(e){
+				var el = e.target;
+				if(el.className == "selected"){
+					el.className = "";
+				}else{
+					el.className = "selected";
+				}
+				var selected = document.getElementsByClassName("selected");
+				if(selected.length==1){
+					_id("editCell").value = selected[0].innerHTML;
+				}else{
+					_id("editCell").value = "";
+				}
+
+				tab.addEventListener("mouseover",selectArea);
+			}
+			table.onmouseup = function(){
+				tab.removeEventListener("mouseover",selectArea);	
+			}
+
+			
+			//鏄剧ず婧愮爜
+			showCode();
+		}
+
+		// 娓呴櫎琛ㄦ牸
+		function clearInput(){
+			_id("text-input").value="";
+			_id("tab").innerHTML = "";
+		}
+
+		//閫夋嫨鍗曞厓鏍�
+		function selectArea(e){
+			var div = document.getElementById("div");
+			var target = e.target;
+			selectElement(target);
+		}
+
+		//鏍囬粍鍗曞厓鏍�
+		function selectElement(el){
+			if(el.className == "selected"){
+				el.className = "";
+			}else{
+				el.className = "selected";
+			}
+		}
+
+		//鍚堝苟鍗曞厓鏍�
+		function combineColumn(){
+			var selected = document.getElementsByClassName("selected");
+			if(selected.length>1){
+				var begin = 1;
+				var tempTd = null;
+				while(selected.length){
+					if(begin){
+						tempTd = selected[0];
+						selected[0].colSpan = selected.length;
+						selected[0].className = "";
+						begin = 0;
+					}else{
+						var text = selected[0].innerHTML;
+						tempTd.innerHTML += " "+text;
+						selected[0].parentElement.removeChild(selected[0]);
+					}
+				}
+			}else{
+				alert("Please choose two cells at least!");
+			}
+			//鏄剧ず婧愮爜
+			showCode();
+		}
+
+		//鍚堝苟琛�
+		function combineRow(){
+			var selected = document.getElementsByClassName("selected");
+			if(selected.length){
+				var begin = 1;
+				var tempTd = null;
+				while(selected.length){
+					if(begin){
+						tempTd = selected[0];
+						selected[0].rowSpan = selected.length;
+						selected[0].className = "";
+						begin = 0;
+					}else{
+						var text = selected[0].innerHTML;
+						tempTd.innerHTML += " "+text;
+						selected[0].parentElement.removeChild(selected[0]);
+						
+					}
+				}
+			}else{
+				alert("There is nothing to combine --!");
+			}
+			//鏄剧ず婧愮爜
+			showCode();
+		}
+
+		//鍒犻櫎鍗曞厓鏍�
+		function deleteSelect(){
+			var selected = document.getElementsByClassName("selected");
+			if(selected.length){
+				while(selected.length){
+					selected[0].parentElement.removeChild(selected[0]);
+				}
+			}
+			//鏄剧ず婧愮爜
+			showCode();
+		}
+
+		//灞呬腑鍗曞厓鏍�
+		function centerSelect(){
+			var selected = document.getElementsByClassName("selected");
+			while(selected.length){
+				selected[0].align = "center";
+				selected[0].className = "";
+			}
+			showCode();
+		}
+
+		//娣诲姞涓嬪垝绾�/鍒犻櫎绾�
+		function decorateSelect(tag){
+			var selected = document.getElementsByClassName("selected");
+			if(selected.length){
+				while(selected.length){
+					selected[0].innerHTML = "<font color=#f00><"+tag+">"+selected[0].innerHTML+"</"+tag+"></font>";
+					selected[0].className = "";
+				}
+			}else{
+				var table = _id("table");
+				var rows = table.rows;
+				for(var i=0;i<rows.length;i++){
+					var tds = rows[i].cells;
+					for(var j=0;j<tds.length;j++){
+						tds[j].innerHTML = "<font color=#f00><"+tag+">"+tds[j].innerHTML+"</"+tag+"></font>";
+					}
+				}
+			}
+			showCode();
+		}
+
+		//鏀瑰彉鍗曞厓鏍煎唴瀹�
+		function changeContent(self){
+			var selected = document.getElementsByClassName("selected");
+			if(selected.length==1){
+				selected[0].innerHTML = self.value;
+				showCode();
+			}
+
+		}
+
+
+		//鏄剧ず婧愮爜
+		function showCode(){
+			var source = _id("tab").innerHTML;
+			source = source.replace(/\sclass=\"\"/g,"");
+			_id("code").innerText = source;
+		}
+	</script>
+</head>
+<body>
+<div class="table-editor">
+	<div class="input-panel">
+		<div style="border-right: 1px solid #ccc;">
+			<textarea id="text-input"></textarea>
+		</div>
+		<div id="tab" style="overflow: auto;">
+		</div>
+	</div>
+	<div class="button-panel">
+		<div style="flex: 1;display:flex">
+			<button style="flex: 1;" onclick="generate()">Generate</button>
+			<button style="flex: 1;" onclick="clearInput()">Clear</button>
+		</div>		
+		<div style="flex: 1;display:flex">
+			<button style="flex: 1;" onclick="combineRow()">Combine Row</button>
+			<button style="flex: 1;" onclick="combineColumn()">Combine Column</button>
+			<button style="flex: 1;" onclick="deleteSelect()">Delete</button>
+			<button style="flex: 1;" onclick="centerSelect()">Center</button>
+			<button style="flex: 1;" onclick="decorateSelect('u')">UnderLine</button>
+			<button style="flex: 1;" onclick="decorateSelect('strike')">LineThrow</button>
+		</div>
+	</div>
+	<div class="display-panel">
+		<div id="code"></div>
+		<div>
+			<textarea id="editCell" onblur="changeContent(this)"></textarea>
+		</div>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+package com.thinkgem.jeesite.modules.ats.utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import org.activiti.engine.impl.util.json.JSONArray;
+import org.activiti.engine.impl.util.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.FileUtils;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.ats.entity.AtsAct;
+import com.thinkgem.jeesite.modules.ats.entity.AtsTask;
+
+public class SouthCarolina extends BaseStateUtils{
+	
+	public static void main(String[] args) throws IOException {
+		File folder = new File("E:\\test");
+		File[] files = folder.listFiles();
+		for(File file : files){
+			String html = FileUtils.readFileToString(file);
+			html = clearHtml(html);
+			List<String> list = RegexUtil.matchAllList("<p> SECTION[\\s\\S]*?[\\s\\S]*?(?=<p> SECTION|$)", html);
+			for(String str:list){
+				String update = "";
+				if(RegexUtil.isFind("is amended by adding", str)){
+					update = "1";
+				}
+				List<String> sections = RegexUtil.matchAllList("<p> Section[\\s\\S]*?[\\s\\S]*?(?=<p> Section|$)", str);
+				for(String section:sections){
+					String caption = RegexUtil.match("Section .*?(?=\\.)", section);
+					section = RegexUtil.replaceFirst("Section .*?\\.", "", section);
+					if(update.equals("1")){
+						section = RegexUtil.replace("<p>([\\s\\S]*?)</p>", "<p><font color=\"#f00\"><u>$1</u></font></p>", section);
+					}
+					System.out.println(caption);
+					System.out.println(section);
+					
+					
+				}
+				
+			}
+			break;
+		
+		}
+	}
+	public static String clearHtml(String html){
+		html = RegexUtil.replace("<pre>[\\s\\S]*?</pre>", "", html);
+		html = RegexUtil.replace("<b>[\\s\\S]*?</b>", "", html);
+		html = RegexUtil.replace("&nbsp;", "", html);
+		html = RegexUtil.replace("<([^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", "", html);
+		return html;
+				
+	}
+	
+	public SouthCarolina() {
+		super();
+	}
+
+	public SouthCarolina(String state) {
+		super(state);
+	}
+
+	@Override
+	public void doCheckingUpdate(AtsTask task) {
+		Document dom = null;
+		try {
+			dom = Jsoup.connect(task.getUrl()).timeout(10000).get();
+		} catch (IOException e) {
+			count = -1;
+			return;
+		}
+		Element el = dom.getElementById("resultsbox").select("dl").first();
+		Elements dts = el.select("dt");
+		Elements dds = el.select("dd");
+		for(int i=0;i<dts.size();i++){
+			//获取Bill Number和Link
+			Element dt = dts.get(i);
+			Element dd = dds.get(i);
+			Element anchor = dt.select("a").first();
+			String billNumber = anchor.text();
+			billNumber = "Act No. " + billNumber; 
+			String href = anchor.absUrl("href");
+			//获取生效日期
+			String ed = RegexUtil.match("(?<=Effective\\s)\\w+\\s\\d{2},\\s\\d{4}", dd.text());
+			if(StringUtils.isNotBlank(ed)){
+				ed = DateUtils.changeDateFormat(ed);
+			}
+			if(!allActs.contains(href)){
+				System.out.println(billNumber);
+				try {
+					dom = Jsoup.connect(href).timeout(10000).get();
+				} catch (IOException e) {
+					continue;
+				}
+				String link = dom.getElementsContainingOwnText("View full text").first().absUrl("href");
+				try {
+					dom = Jsoup.connect(link).timeout(10000).get();
+				} catch (IOException e) {
+					continue;
+				}
+				String html = RegexUtil.replace("<a[^>]*?>|</a>","", dom.body().html());
+				html = RegexUtil.replace("°", "&#176;", html);
+				html = RegexUtil.replace("´", "&#180;", html);
+				FileUtils.writeToFile(path+File.separator+billNumber+".html", html, false);
+				File file = new File(path+File.separator+billNumber+".html");
+				AtsAct temp = new AtsAct();
+				temp.setBillNumber(billNumber);
+				temp.setState("SouthCarolina");
+				temp.setFileSize(file.length()/1024);
+				temp.setSessionYear("2016");
+				temp.setType(2);
+				temp.setDay(DateUtils.getDate("yyyyMMdd"));
+				temp.setDownloadFile(file.getAbsolutePath());
+				temp.setEffectiveDate(ed);
+				temp.setUrl(href);
+				temp.setWorkMode(2);
+				temp.setRemark("");
+				atsActService.save(temp);
+				count++;
+				allActs.add(href);
+			}
+		}		
+	}
+
+	@Override
+	public JSONObject doParseAct(AtsAct act) {
+		JSONObject root = new JSONObject();
+		JSONArray array = new JSONArray();
+		String html = "";
+		try {
+			html = FileUtils.readFileToString(new File(act.getDownloadFile()),"utf-8");
+		} catch (IOException e) {
+			System.err.println("错误类型:文件不存在。错误地址:Florida.java 78行。");
+		}
+		root.put("children", array);
+		html = clearHtml(html);
+		String eff = "";
+		if(RegexUtil.isFind("This act takes effect upon approval by the Governor", html)){
+			eff = RegexUtil.match("(?<=Approved the ).*?(?=\\.)", html);
+			eff = RegexUtil.replace("\\D*?of ", " ", eff);
+			eff = DateUtils.changeDateFormat(eff);
+		}
+		
+		List<String> list = RegexUtil.matchAllList("<p> SECTION[\\s\\S]*?[\\s\\S]*?(?=<p> SECTION|$)", html);
+		for(String str:list){
+			String update = "2";
+			if(RegexUtil.isFind("is amended by adding a new subsection", str)){
+				update = "2";
+			}else if(RegexUtil.isFind("is amended by adding:", str)){
+				update = "1";
+			}else if(RegexUtil.isFind("is repealed", str)){
+				update = "3";
+			}
+			str = RegexUtil.replace("\"", "", str);
+			str = RegexUtil.replace("\'(?!s)", "\"" , str);
+			List<String> sections = RegexUtil.matchAllList("<p> Section[\\s\\S]*?[\\s\\S]*?(?=<p> Section|$)", str);
+			if(sections.size()>0){
+				for(String section:sections){
+					JSONObject json = new JSONObject();
+					String caption = RegexUtil.match("Section .*?(?=\\.)", section);
+					section = RegexUtil.replaceFirst("Section .*?\\.", "", section);
+					if(update.equals("1")){
+						section = RegexUtil.replace("<p>([\\s\\S]*?)</p>", "<p><font color=\"#f00\"><u>$1</u></font></p>", section);
+					}
+					json.put("content", section);
+					json.put("caption", caption);
+					json.put("update", update);
+					json.put("eff", eff);
+					json.put("shortName", "SC Code "+RegexUtil.replace("Section ", "", caption).trim());
+					array.put(json);
+				}
+			}else{
+				JSONObject json = new JSONObject();
+				String caption = RegexUtil.match("Section .*?(?=\\s|\\()", str);
+				str = RegexUtil.replaceFirst("<p>[\\s\\S]*?</p>", "", str);
+				if(update.equals("1")){
+					str = RegexUtil.replace("<p>([\\s\\S]*?)</p>", "<p><font color=\"#f00\"><u>$1</u></font></p>", str);
+				}
+				if(caption.isEmpty()){
+					continue;
+				}
+				json.put("content", str);
+				json.put("caption", caption);
+				json.put("update", update);
+				json.put("eff", eff);
+				json.put("shortName", "SC Code "+RegexUtil.replace("Section ", "", caption).trim());
+				
+				array.put(json);
+			}
+			
+		}
+		return root;
+	}
+		
+}

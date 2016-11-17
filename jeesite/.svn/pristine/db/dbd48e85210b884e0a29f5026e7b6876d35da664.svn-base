@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsTaskDao">
+    
+	<sql id="atsTaskColumns">
+		a.id AS "id",
+		a.state AS "state",
+		a.session_year AS "sessionYear",
+		a.is_finished AS "isFinished",
+		a.url AS "url",
+		a.short_name AS "shortName",
+		a.encoding AS "encoding",
+		a.prefix AS "prefix"
+	</sql>
+	
+	<sql id="atsTaskJoins">
+	</sql>
+    
+	<select id="get" resultType="AtsTask">
+		SELECT 
+			<include refid="atsTaskColumns"/>
+		FROM ats_task a
+		<include refid="atsTaskJoins"/>
+		<where>
+			<if test="id !=null and id!=''">
+				AND a.id = #{id}
+			</if>
+			<if test="state !=null and state!=''">
+				AND a.state = #{state} 
+			</if>
+		</where>
+	</select>
+	
+	<select id="findList" resultType="AtsTask">
+		SELECT 
+			<include refid="atsTaskColumns"/>
+		FROM ats_task a
+		<include refid="atsTaskJoins"/>
+		<where>
+			<if test="isFinished!=null">
+				and is_finished = #{isFinished}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AtsTask">
+		SELECT 
+			<include refid="atsTaskColumns"/>
+		FROM ats_task a
+		<include refid="atsTaskJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO ats_task(
+			id,
+			state,
+			session_year,
+			is_finished,
+			url,
+			short_name,
+			encoding
+		) VALUES (
+			seq_task.Nextval,
+			#{state},
+			#{sessionYear},
+			#{isFinished},
+			#{url},
+			#{shortName},
+			#{encoding}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_task SET 	
+			state = #{state},
+			session_year = #{sessionYear},
+			is_finished = #{isFinished},
+			url = #{url},
+			short_name = #{shortName},
+			encoding = #{encoding}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM ats_task
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

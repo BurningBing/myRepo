@@ -1,0 +1,203 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.ats.entity;
+
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.Length;
+
+import com.thinkgem.jeesite.common.persistence.DataEntity;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * sectionEntity
+ * @author Chad
+ * @version 2016-03-24
+ */
+public class AtsSection extends DataEntity<AtsSection> {
+	
+	private static final long serialVersionUID = 1L;
+	private String pid;		// Act Id
+	private String caption;		// caption
+	private String description;		// description
+	private String content;		// content
+	private String billNumber;		// bill_number
+	private String eff;		// eff
+	private String exp;		// exp
+	private String link;		// link
+	private String shortName;		// short_name
+	private Integer updateType;		// 1-new 2-modify 3-repeal
+	private String editor;		// editor
+	private Integer status;		// 1-程序解析
+	private Integer isDel;		// 0-false 1-true
+	private Integer isAdd;		// 0-false 1-true
+	private Integer parseOrder;
+	
+	public AtsSection() {
+		super();
+	}
+
+	public AtsSection(String id){
+		super(id);
+	}
+	
+	public AtsSection(String pid,String editor){
+		this.pid = pid;
+		this.editor = editor;
+	}
+	
+	
+
+	public AtsSection(String pid, String caption, String description, String content, String billNumber, String eff,
+			String shortName, Integer updateType, Integer parseOrder) {
+		this.pid = pid;
+		this.caption = caption;
+		this.description = description;
+		this.content = content;
+		this.billNumber = billNumber;
+		this.eff = eff;
+		this.exp = "";
+		this.link = "";
+		this.shortName = shortName;
+		this.updateType = updateType;
+		this.parseOrder = parseOrder;
+		this.editor = UserUtils.getUser().getName();
+		this.status = 1;
+		this.isDel = 0;
+		this.isAdd = 0;
+	}
+
+	@NotNull(message="Act Id不能为空")
+	public String getPid() {
+		return pid;
+	}
+
+	public void setPid(String pid) {
+		this.pid = pid;
+	}
+	
+	@Length(min=1, max=200, message="caption长度必须介于 1 和 200 之间")
+	public String getCaption() {
+		return caption;
+	}
+
+	public void setCaption(String caption) {
+		this.caption = caption;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	@Length(min=0, max=500, message="content长度必须介于 0 和 500 之间")
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+	
+	@Length(min=1, max=200, message="bill_number长度必须介于 1 和 200 之间")
+	public String getBillNumber() {
+		return billNumber;
+	}
+
+	public void setBillNumber(String billNumber) {
+		this.billNumber = billNumber;
+	}
+	
+	@Length(min=1, max=200, message="eff长度必须介于 1 和 200 之间")
+	public String getEff() {
+		return eff;
+	}
+
+	public void setEff(String eff) {
+		this.eff = eff;
+	}
+	
+	@Length(min=0, max=200, message="exp长度必须介于 0 和 200 之间")
+	public String getExp() {
+		return exp;
+	}
+
+	public void setExp(String exp) {
+		this.exp = exp;
+	}
+	
+	@Length(min=0, max=500, message="link长度必须介于 0 和 500 之间")
+	public String getLink() {
+		return link;
+	}
+
+	public void setLink(String link) {
+		this.link = link;
+	}
+	
+	@Length(min=1, max=200, message="short_name长度必须介于 1 和 200 之间")
+	public String getShortName() {
+		return shortName;
+	}
+
+	public void setShortName(String shortName) {
+		this.shortName = shortName;
+	}
+	
+	@NotNull(message="1-new 2-modify 3-repeal不能为空")
+	public Integer getUpdateType() {
+		return updateType;
+	}
+
+	public void setUpdateType(Integer updateType) {
+		this.updateType = updateType;
+	}
+	
+	@Length(min=1, max=200, message="editor长度必须介于 1 和 200 之间")
+	public String getEditor() {
+		return editor;
+	}
+
+	public void setEditor(String editor) {
+		this.editor = editor;
+	}
+	
+	@NotNull(message="status不能为空")
+	public Integer getStatus() {
+		return status;
+	}
+
+	public void setStatus(Integer status) {
+		this.status = status;
+	}
+	
+	@NotNull(message="0-false 1-true不能为空")
+	public Integer getIsDel() {
+		return isDel;
+	}
+
+	public void setIsDel(Integer isDel) {
+		this.isDel = isDel;
+	}
+	
+	@NotNull(message="0-false 1-true不能为空")
+	public Integer getIsAdd() {
+		return isAdd;
+	}
+
+	public void setIsAdd(Integer isAdd) {
+		this.isAdd = isAdd;
+	}
+
+	public Integer getParseOrder() {
+		return parseOrder;
+	}
+
+	public void setParseOrder(Integer parseOrder) {
+		this.parseOrder = parseOrder;
+	}
+}

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsActDao">
+    
+	<sql id="atsActColumns">
+		a.id AS "id",
+		a.state AS "state",
+		a.bill_number AS "billNumber",
+		a.url AS "url",
+		a.download_file AS "downloadFile",
+		a.file_size AS "fileSize",
+		a.type AS "type",
+		a.day AS "day",
+		a.work_mode AS "workMode",
+		a.status AS "status",
+		a.del_flag AS "delFlag",
+		a.upload_file AS "uploadFile",
+		a.effective_date As "effectiveDate",
+		a.remark AS "remark",
+		a.session_year AS "sessionYear",
+		a.page_count AS "pageCount"
+	</sql>
+	
+	<sql id="atsActJoins">
+	</sql>
+    
+	<select id="get" resultType="AtsAct">
+		SELECT * FROM ats_act a
+		<include refid="atsActJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AtsAct">
+		SELECT 
+			<include refid="atsActColumns"/>
+		FROM ats_act a
+		<include refid="atsActJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findCount" resultType="java.lang.Integer">
+		select count(1) from ats_act 
+		<where>
+			<if test="state != null and state != ''">
+				AND state = #{state}
+			</if>
+			<if test="sessionYear != null and sessionYear != ''">
+				AND session_year =#{sessionYear}
+			</if>
+		</where>
+	</select>
+	
+	<select id="findDownloadedActs" resultType="java.lang.String">
+		select url from ats_act where state = #{state}
+	</select>
+	
+	<select id="findUnsignedStates" resultType="java.lang.String">
+		select state from ats_act where status = 1 and type = #{type} and del_flag = 0 group by state 
+	</select>
+	
+	<select id="loadMyActs" resultType="java.util.Map">
+		select a.id,a.state,a.bill_number,s.id AS section_id,s.caption from ats_act a left join ats_section s on a.id = s.pid where s.editor = #{0} and a.del_flag = 0 and a.is_del = 0 and a.type = #{1} order by a.state
+	</select>
+	
+	<select id="findAllList" resultType="AtsAct">
+		SELECT 
+			<include refid="atsActColumns"/>
+		FROM ats_act a
+		<include refid="atsActJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findUnsignedActsByState" resultType = "java.util.Map">
+		select a.id,a.bill_number,a.day from 
+		ats_act a left join 
+		ats_sign s on
+		a.id = s.pid
+		where
+		a.type = #{2} and 
+		a.status = 1 and
+		a.state = #{1} and
+		a.del_flag = 0 and
+		(s.editor != #{0} or s.editor is null)
+		order by a.day
+	</select>
+	
+	<select id="getActTreeByEditor" resultType = "java.util.Map">
+		SELECT * FROM ATS_V_TREE WHERE EDITOR = #{0} and TYPE = #{1} and del_flag = 0 and (is_del = 0 or is_del is null) and flag in(1,2) order by day ,sign_id,parse_order
+	</select>
+	
+	<select id="getFeedbackTree" resultType = "java.util.Map">
+		SELECT * FROM ATS_V_TREE WHERE EDITOR = #{0} and TYPE = 1 and del_flag = 0 and (is_del = 0 or is_del is null) and status in (1,3) and flag = 3 order by day ,bill_number,parse_order
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO ats_act(
+			id,
+			state,
+			bill_number,
+			url,
+			download_file,
+			file_size,
+			type,
+			day,
+			work_mode,
+			status,
+			del_flag,
+			upload_file,
+			remark,
+			effective_date,
+			page_count,
+			session_year
+		) VALUES (
+			seq_act.Nextval,
+			#{state},
+			#{billNumber},
+			#{url},
+			#{downloadFile},
+			#{fileSize},
+			#{type},
+			#{day},
+			#{workMode},
+			#{status},
+			#{delFlag},
+			#{uploadFile},
+			#{remark},
+			#{effectiveDate},
+			#{pageCount},
+			#{sessionYear}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_act SET 	
+			state = #{state},
+			bill_number = #{billNumber},
+			url = #{url},
+			download_file = #{downloadFile},
+			file_size = #{fileSize},
+			type = #{type},
+			day = #{day},
+			work_mode = #{workMode},
+			status = #{status},
+			del_flag = #{delFlag},
+			upload_file = #{uploadFile},
+			remark = #{remark},
+			page_count = #{pageCount}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE ats_act SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

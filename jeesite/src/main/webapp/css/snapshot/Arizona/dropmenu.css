@@ -1,0 +1,91 @@
+﻿ul.dropmenu{
+	width:100%;
+	border-top:solid 1px #fff;
+	font:bold 12px/14px Arial,Helvetica,sans-serif;
+	color:#fff;
+	padding:0;
+	margin:0;
+	list-style:none;
+}
+ul.dropmenu li{
+	width:auto;
+	/*border-left:solid 1px #fff;*/
+	float:left;
+	padding:0;
+	margin:0;
+	position:relative;
+}
+ul.dropmenu li ~ li{
+	width:auto;
+	border-left:solid 1px #fff;
+	float:left;
+	padding:0;
+	margin:0;
+	position:relative;
+}
+ul.dropmenu li a:hover{text-decoration:underline;}
+ul.dropmenu li a{
+	color:#fff!important;
+	font:bold 12px/21px Arial,Helvetica,sans-serif!important;
+	padding:0 15px 0 20px;
+	margin:0;
+	border:0;
+	text-decoration:none;
+}
+ul.dropmenu li ul{
+	background:#547196;
+	width:175px;
+	padding:0;
+	margin:0;
+	border:solid 1px #fff;
+	border-bottom:0;
+	position:absolute;
+	top:21px;
+	left:0;
+	list-style:none;
+	visibility:hidden;
+}
+
+ul.dropmenu li.CalendarNews ul{
+	background:#547196;
+	width:156px;
+	padding:0;
+	margin:0;
+	border:solid 1px #fff;
+	border-bottom:0;
+	position:absolute;
+	top:21px;
+	left:0;
+	list-style:none;
+	visibility:hidden;
+}
+
+ul.dropmenu li.dropleft ul{
+	left:auto;
+	right:0;
+}
+ul.dropmenu li ul li{
+	width:100%;
+	padding:0;
+	margin:0;
+	border:0;
+	border-bottom:solid 1px #fff;
+}
+ul.dropmenu li ul li.bg{
+	background:url(../AlisImages/ico1.gif) no-repeat 95% 50%
+}
+ul.dropmenu li ul li.hover{background-color:#A2B5CD;}
+ul.dropmenu li ul li a{
+	padding:0;
+	margin:0 0 0 10px;
+	display:block;
+	position:relative;
+	z-index:10;
+}
+ul.dropmenu li ul li ul{
+	top:0;
+	left:173px;
+}
+ul.dropmenu li.dropleft ul li ul{
+	right:173px;
+}

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsTreeDao">
+    
+	<sql id="atsTreeColumns">
+		a.id AS "id",
+		a.pid AS "pid",
+		a.name AS "name",
+		a.icon_skin AS "iconSkin",
+		a.is_parent AS "isParent",
+		a.method AS "method",
+		a.is_hidden AS "isHidden",
+		a.fid AS "fid",
+		a.status AS "status",
+		a.editor AS "editor",
+		a.root_id AS "rootId"
+	</sql>
+	
+	<select id="get" resultType="AtsTree">
+		SELECT <include refid="atsTreeColumns"/> 
+		FROM ats_tree a
+		<where>
+			<if test="id!='' and id != null">
+				and a.id = #{id}
+			</if>
+			<if test="pid!='' and pid != null">
+				and a.pid = #{pid}
+			</if>
+			<if test="name!='' and name != null">
+				and a.name = #{name}
+			</if>
+			<if test="method !='' and method != null">
+				and a.method = #{method}
+			</if>
+			<if test="fid !='' and fid != null">
+				and a.fid = #{fid}
+			</if>
+			<if test="status !='' and status != null">
+				and a.status = #{status}
+			</if>
+			<if test="isParent !='' and isParent != null">
+				and a.is_parent = #{isParent}
+			</if>
+			<if test="editor !='' and editor != null">
+				and (a.editor = #{editor} OR a.editor is null)
+			</if>
+			<if test="rootId !='' and rootId != null">
+				and a.root_id = #{rootId}
+			</if>
+		</where> 
+	</select>
+	
+	<select id="findList" resultType="AtsTree">
+		SELECT 
+			<include refid="atsTreeColumns"/>
+		FROM ats_tree a where a.status != -1 
+			<if test="id!='' and id != null">
+				and a.id = #{id}
+			</if>
+			<if test="pid!='' and pid != null">
+				and a.pid = #{pid}
+			</if>
+			<if test="name!='' and name != null">
+				and a.name = #{name}
+			</if>
+			<if test="method !='' and method != null">
+				and a.method = #{method}
+			</if>
+			<if test="fid !='' and fid != null">
+				and a.fid = #{fid}
+			</if>
+			<if test="status !='' and status != null">
+				and a.status = #{status}
+			</if>
+			<if test="editor !='' and editor != null">
+				and (a.editor = #{editor} OR a.editor is null)
+			</if>
+			<if test="rootId !='' and rootId != null">
+				and a.root_id = #{rootId}
+			</if>
+			order by a.sort,a.id
+	</select>
+	
+	<insert id="insert">
+		<selectKey resultType="java.lang.String" order="BEFORE" keyProperty="id">
+			select seq_tree.nextval as id from DUAL
+		</selectKey>
+		INSERT INTO ats_tree(
+			id,
+			pid,
+			name,
+			icon_skin,
+			is_parent,
+			method,
+			is_hidden,
+			fid,
+			status,
+			editor,
+			root_id
+		) VALUES (
+			#{id},
+			#{pid},
+			#{name},
+			#{iconSkin},
+			#{isParent},
+			#{method},
+			#{isHidden},
+			#{fid},
+			#{status},
+			#{editor},
+			#{rootId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_tree SET
+			name = #{name},
+			icon_skin = #{iconSkin},
+			is_parent = #{isParent},
+			is_hidden = #{isHidden},
+			fid = #{fid},
+			status = #{status},
+			editor = #{editor},
+			root_id = #{rootId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="hidden">
+		UPDATE ats_tree SET
+			is_hidden = 1
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		delete from ats_tree 
+		<where>
+			<if test="id!='' and id!=null">
+				AND id = #{id}
+			</if>
+			<if test="pid!='' and pid!=null">
+				AND pid = #{pid}
+			</if>
+			<if test="fid!='' and fid!=null">
+				AND fid = #{fid}
+			</if>
+			<if test="method!='' and method!=null">
+				AND method = #{method}
+			</if>
+			<if test="editor!='' and editor!=null">
+				AND editor = #{editor}
+			</if>
+			<if test="rootId !='' and rootId != null">
+				and a.root_id = #{rootId}
+			</if>
+		</where>
+	</update>
+</mapper>

@@ -1,0 +1,538 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.ats.web;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.activiti.engine.impl.util.json.JSONArray;
+import org.activiti.engine.impl.util.json.JSONException;
+import org.activiti.engine.impl.util.json.JSONObject;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.CompareUtils;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.FileUtils;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.websocket.GlobalHandler;
+import com.thinkgem.jeesite.modules.ats.entity.AtsAct;
+import com.thinkgem.jeesite.modules.ats.entity.AtsFeedback;
+import com.thinkgem.jeesite.modules.ats.entity.AtsSection;
+import com.thinkgem.jeesite.modules.ats.service.AtsActService;
+import com.thinkgem.jeesite.modules.ats.service.AtsFeedbackService;
+import com.thinkgem.jeesite.modules.ats.service.AtsSectionService;
+import com.thinkgem.jeesite.modules.ats.service.AtsSignService;
+import com.thinkgem.jeesite.modules.ats.service.AtsTaskService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * sectionController
+ * @author Chad
+ * @version 2016-03-24
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/atsSection")
+public class AtsSectionController extends BaseController {
+
+	@Autowired
+	private AtsSectionService atsSectionService;
+	@Autowired
+	private AtsActService atsActService;
+	@Autowired
+	private AtsTaskService atsTaskService;
+	@Autowired
+	private AtsSignService atsSignService;
+	@Autowired
+	private AtsFeedbackService atsFeedbackService;
+	
+	
+	@ModelAttribute
+	public AtsSection get(@RequestParam(required=false) String id) {
+		AtsSection entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = atsSectionService.get(id);
+		}
+		if (entity == null){
+			entity = new AtsSection();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("ats:atsSection:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(AtsSection atsSection, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<AtsSection> page = atsSectionService.findPage(new Page<AtsSection>(request, response), atsSection); 
+		model.addAttribute("page", page);
+		return "modules/ats/atsSectionList";
+	}
+
+	@RequiresPermissions("ats:atsSection:view")
+	@RequestMapping(value = "form")
+	public String form(AtsSection atsSection, Model model) {
+		model.addAttribute("atsSection", atsSection);
+		return "modules/ats/atsSectionForm";
+	}
+
+	@RequiresPermissions("ats:atsSection:edit")
+	@RequestMapping(value = "save")
+	public String save(AtsSection atsSection, Model model, RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, atsSection)){
+			return form(atsSection, model);
+		}
+		atsSectionService.save(atsSection);
+		addMessage(redirectAttributes, "保存section成功");
+		return "redirect:"+Global.getAdminPath()+"/ats/atsSection/?repage";
+	}
+	
+	@RequiresPermissions("ats:atsSection:edit")
+	@RequestMapping(value = "delete")
+	public String delete(AtsSection atsSection, RedirectAttributes redirectAttributes) {
+		atsSectionService.delete(atsSection);
+		addMessage(redirectAttributes, "删除section成功");
+		return "redirect:"+Global.getAdminPath()+"/ats/atsSection/?repage";
+	}
+
+	/**
+	 * 通过Id找到Section，点击编辑器中Section调用此方法
+	 * @param section
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="findSectionById")
+	public void findSectionById(AtsSection section,HttpServletRequest request,HttpServletResponse response){
+		AtsAct act = atsActService.get(section.getPid()+"");
+		JSONObject json = section.toJson();
+		File file = null;
+		json.put("state", act.getState());
+		file = new File(section.getContent());
+		try {
+			if(file.exists()){
+				String content = FileUtils.readFileToString(file);
+				json.put("html", content);
+			}else{
+				json.put("html", "");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(section.getStatus()==3){
+			AtsFeedback temp = new AtsFeedback();
+			temp.setSectionId(section.getId());
+			List<AtsFeedback> feedbacks = atsFeedbackService.findList(temp);
+			JSONArray fs = new JSONArray();
+			for(AtsFeedback feedback:feedbacks){
+				if(feedback.getType()==7){
+					file = new File("C:\\ATS\\Feedback\\"+section.getEditor()+"\\"+section.getId()+".html");
+					try {
+						json.put("html", FileUtils.readFileToString(file));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				fs.put(feedback.getType());
+			}
+			json.put("feedback", fs);
+		}
+		json.put("filePath", act.getDownloadFile());
+		System.out.println(json);
+		sendMessage(response, json.toString());
+	}
+	
+	/**
+	 * 保存正文
+	 * @param section
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="saveContent")
+	public void saveContent(AtsSection section,HttpServletRequest request,HttpServletResponse response){
+		if(section.getStatus()!=1){
+			section.setStatus(1);
+			atsSectionService.save(section);
+		}
+		JSONObject json = new JSONObject();
+		String html = request.getParameter("html");
+		html = RegexUtil.replace("\n", "", html);
+		html = RegexUtil.replace("&nbsp;", " ", html);
+//		html = RegexUtil.replace("<p[^>]*?>", "<p>", html);
+		html = RegexUtil.replace("<p>", "\n<p>", html);
+		html = RegexUtil.replace("§", "&#167;", html);
+		html = RegexUtil.replace("&lt;(.*?)&gt;", "<$1>", html);
+		html = RegexUtil.replace("</?mark>", "", html);
+		html = RegexUtil.replace("ff0000", "f00", html);      
+    	html = RegexUtil.replace("'#f00'", "\"#f00\"", html); 
+		html = RegexUtil.replace("<u[^>]+>(.*?)</u>", "<font color=\"#f00\"><u>$1</u></font>", html);
+    	html = RegexUtil.replace("</u></font><font color=\"#f00\"><u>", "", html);
+    	html = RegexUtil.replace("</strike><strike>", "", html);
+    	//剔除任意空标签
+    	while (RegexUtil.isFind("<([^t/][^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", html)) {
+    		html = RegexUtil.replace("<([^t/][^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", "", html);
+		}
+		try {
+			FileUtils.writeStringToFile(new File(section.getContent()), html);
+			json.put("flag", true);
+			json.put("msg", "保存成功");
+			json.put("html", html);
+			sendMessage(response, json.toString());
+		} catch (IOException e) {
+			json.put("flag", true);
+			json.put("msg", "保存失败，请联系管理员.");
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 保存关键信息
+	 * @param section
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="saveKeyInfor")
+	public void saveKeyInfor(AtsSection section,HttpServletRequest request,HttpServletResponse response){
+		String key = request.getParameter("key");
+		key = key.replace(key.charAt(0), (char) (key.charAt(0)-32));
+		String value = request.getParameter("value");
+		if(key.equals("UpdateType")){
+			section.setUpdateType(Integer.parseInt(value));
+		}else{
+			try {
+				section.getClass().getDeclaredMethod("set"+key, String.class).invoke(section, value);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		if(value.equals("1")&&key.equals("UpdateType")){
+			sendMessage(response, "New");
+		}
+		if(section.getStatus()!=1){
+			section.setStatus(1);
+		}
+		atsSectionService.save(section);
+		sendMessage(response, "");
+	}
+
+	/**
+	 * 删除不影响的Section
+	 * @param section
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="removeSection")
+	public void removeSection(HttpServletRequest request,HttpServletResponse response){
+		String[] ids = request.getParameter("ids").split(",");
+		for(int i=0;i<ids.length;i++){
+			AtsSection section = atsSectionService.get(ids[i]);
+			section.setIsDel(1);
+			atsSectionService.save(section);
+		}
+	}
+	
+	/**
+	 * 根据Act Id 批量修改关键信息
+	 * @param act
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping("modifyKeyInforBatch")
+	public void modifyKeyInforBatch(HttpServletRequest request,HttpServletResponse response){
+		AtsSection section = new AtsSection();
+		section.setPid(Integer.parseInt(request.getParameter("pid")));
+		String key = StringUtils.toUpperCaseFirstLetter(request.getParameter("key"));
+		try {
+			section.getClass().getDeclaredMethod("set"+key, String.class).invoke(section, request.getParameter("value"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		boolean flag = atsSectionService.modifyKeyInforBatch(section);
+		if(flag){
+			sendMessage(response, "修改成功！");	
+		}else{
+			sendMessage(response, "修改失败！");
+		}
+		
+		
+
+				
+	}
+
+	/**
+	 * 批量添加repeal节点
+	 */
+	@RequestMapping(value="repealBath")
+	public void repealBath(HttpServletRequest request, HttpServletResponse response){
+		AtsAct act = atsActService.get(request.getParameter("pid"));
+		String shortName = atsTaskService.getByState(act.getState()).getShortName();
+		JSONArray array = atsSectionService.repealBach(request.getParameter("value"), act, shortName);
+		sendMessage(response, array.toString());
+	}
+
+	/**
+	 * 提交Section
+	 * @param section
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="submitSection")
+	public void submitSection(AtsSection section, HttpServletRequest request,HttpServletResponse response){
+		// 获取Act
+		AtsAct act = atsActService.get(section.getPid()+"");
+		// 首次提交
+		section.setStatus(2);
+		atsSectionService.save(section);
+		// 检查是否可进行对比
+		int count = atsSectionService.findUnsubmitCount(section.getPid()+"");
+		if(count==0){
+			//进行对比,首先获取双方Section的集合(本人为Sl1,对方为Sl2)
+			AtsSection temp = new AtsSection();
+			temp.setPid(section.getPid());
+			List<AtsSection> sections = atsSectionService.findList(temp);
+			List<AtsSection> sl1 = new ArrayList<AtsSection>();
+			List<AtsSection> sl2 = new ArrayList<AtsSection>();
+			for(AtsSection s:sections){
+				if(s.getEditor().equals(UserUtils.getUser().getName())){
+					sl1.add(s);
+				}else{
+					sl2.add(s);
+				}
+			}
+			
+			int r = 0;
+			if(sl1.size()!=sl2.size()){
+				//双方Section数量不一致
+				if(sl2.size()==0){
+					sendMessage(response, section.getId());
+					return ;
+				}else{
+					AtsFeedback f1 = new AtsFeedback();
+					f1.setActId(section.getPid()+"");
+					f1.setSectionId("");
+					f1.setEditor(sl1.get(0).getEditor());
+					f1.setType(8);
+					f1.setStatus(0);
+					f1.setContent("Section数量不一致，本人为"+sl1.size()+",对方为"+sl2.size());
+					f1.setDay(DateUtils.getDate("yyyyMMdd hh:mm:ss"));
+					f1.setChecker("管理员");
+					atsFeedbackService.save(f1);
+					AtsFeedback f2 = new AtsFeedback();
+					f2.setActId(section.getPid()+"");
+					f2.setSectionId("");
+					f2.setEditor(sl2.get(0).getEditor());
+					f2.setType(8);
+					f2.setStatus(0);
+					f2.setContent("Section数量不一致，本人为"+sl2.size()+",对方为"+sl1.size());
+					f2.setDay(DateUtils.getDate("yyyyMMdd hh:mm:ss"));
+					f2.setChecker("管理员");
+					atsFeedbackService.save(f2);
+					r = 1;
+				}
+			}else{
+				for(int i=0;i<sl1.size();i++){
+					AtsSection s1 = sl1.get(i);
+					AtsSection s2 = sl2.get(i);
+					if(s1.getShortName().equals(s2.getShortName())){
+						//对比关键信息
+						boolean f1 = compareKeyInformation(s1,s2);
+						//对比正文
+						boolean f2 = compareContent(s1, s2);
+						if(!f2){
+							List<AtsFeedback> feedbacks = new ArrayList<AtsFeedback>();
+							addFeedback(s1, s1.getCaption()+": 正文对比存在差异，请查看详细对比结果", 7, feedbacks);
+							addFeedback(s2, s2.getCaption()+": 正文对比存在差异，请查看详细对比结果", 7, feedbacks);
+							for(AtsFeedback f:feedbacks){
+								atsFeedbackService.save(f);
+							}
+						}
+						if(!f1||!f2){
+							s1.setStatus(3);
+							s2.setStatus(3);
+							atsSectionService.save(s1);
+							atsSectionService.save(s2);
+							r++;
+						}
+					}else{
+						//循环遍历对方Sections，查找是否存在该Section
+					}
+				}
+			}
+			
+			if(r!=0){
+				//给双方发送对比反馈信息
+				GlobalHandler.sendMessage(sl1.get(0).getEditor(), "您有新的反馈信息，请及时查看！", "管理员");
+				GlobalHandler.sendMessage(sl2.get(0).getEditor(), "您有新的反馈信息，请及时查看！", "管理员");
+				act.setStatus(3);
+			}else{
+				act.setStatus(4);
+			}
+			atsActService.save(act);
+			GlobalHandler.invokeJsMethod(sl1.get(0).getEditor(), "removeTreeNode", section.getPid()+"");
+			GlobalHandler.invokeJsMethod(sl2.get(0).getEditor(), "removeTreeNode", section.getPid()+"");
+		}else{
+			//有人未全部提交
+			System.out.println("undo");
+			sendMessage(response, section.getId());
+		}
+	}
+	
+	/**
+	 * 二次提交
+	 * @param section
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping("submitFeedback")
+	public void submitFeedback(AtsSection section1, HttpServletRequest request, HttpServletResponse response){
+		AtsSection section2 = atsSectionService.findCompareSection(section1.getPid(), section1.getShortName(),section1.getEditor());
+		System.out.println(section2==null);
+	}
+	/**
+	 * 对比关键信息
+	 * @param s1
+	 * @param s2
+	 * @return
+	 */
+	public boolean compareKeyInformation(AtsSection s1,AtsSection s2){
+		boolean flag = true;
+		List<AtsFeedback> feedbacks = new ArrayList<AtsFeedback>();
+		if(!s1.getCaption().equals(s2.getCaption())){
+			addFeedback(s1, s1.getCaption()+": Caption不一致，请检查。", 1, feedbacks);
+			addFeedback(s2, s2.getCaption()+": Caption不一致，请检查。", 1, feedbacks);
+			flag = false;
+		}
+		if(!s1.getDescription().equals(s2.getDescription())){
+			addFeedback(s1, s1.getCaption()+": Description不一致，请检查。", 2, feedbacks);
+			addFeedback(s2, s2.getCaption()+": Description不一致，请检查。", 2, feedbacks);
+			flag = false;
+		}
+		if(!s1.getEff().equals(s2.getEff())){
+			addFeedback(s1, s1.getCaption()+": 生效日期不一致，请检查。", 3, feedbacks);
+			addFeedback(s2, s2.getCaption()+": 生效日期不一致，请检查。", 3, feedbacks);
+			flag = false;
+		}
+//		if(!s1.getLink().equals(s2.getLink())){
+//			addFeedback(s1, s1.getCaption()+": Source Note Link 不一致，请检查。", 1, feedbacks);
+//			addFeedback(s2, s2.getCaption()+": Source Note Link 不一致，请检查。", 1, feedbacks);
+//			flag = false;
+//		}
+		if(s1.getExp()!=null||s2.getExp()!=null){
+			String exp1 = s1.getExp();
+			String exp2 = s2.getExp();
+			exp1 = exp1==null?"":exp1;
+			exp2 = exp2==null?"":exp2;
+			if(!exp1.equals(exp2)){
+				addFeedback(s1, s1.getCaption()+": 失效日期不一致，请检查。", 5, feedbacks);
+				addFeedback(s2, s2.getCaption()+": 失效日期不一致，请检查。", 5, feedbacks);
+				flag = false;
+			}
+		}
+		if(!s1.getUpdateType().equals(s2.getUpdateType())){
+			addFeedback(s1, s1.getCaption()+": Update不一致，请检查。", 6, feedbacks);
+			addFeedback(s2, s2.getCaption()+": Update不一致，请检查。", 6, feedbacks);
+			flag = false;
+		}
+		for(AtsFeedback feedback:feedbacks){
+			atsFeedbackService.save(feedback);
+		}
+		return flag;
+	}
+
+	/**
+	 * 对比正文
+	 * @param s1
+	 * @param s2
+	 * @return
+	 */
+	public boolean compareContent(AtsSection s1,AtsSection s2){
+		CompareUtils cu = new CompareUtils(s1.getContent(), s2.getContent());
+		cu.starCompare();
+		if(!cu.isPass()){
+			try {
+				String h1 = RegexUtil.replace("font>(\\w)", "font> $1", cu.getSb1().toString());
+				h1 = RegexUtil.replace("</(strike|u)><(strike|u)>", "</$1> <$2>", h1);
+				String h2 = RegexUtil.replace("font>(\\w)", "font> $1", cu.getSb2().toString());
+				FileUtils.writeStringToFile(new File("C:\\ATS\\Feedback\\"+s1.getEditor()+"\\"+s1.getId()+".html"), h1);
+				FileUtils.writeStringToFile(new File("C:\\ATS\\Feedback\\"+s2.getEditor()+"\\"+s2.getId()+".html"), h2);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return cu.isPass();
+	}
+
+	/**
+	 * 合并节点
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="combineSections")
+	public void combineSections(HttpServletRequest request,HttpServletResponse response){
+		String[] ids = request.getParameter("ids").split(",");
+		StringBuffer sb = new StringBuffer();
+		JSONArray array = new JSONArray();
+		for(int i=0;i<ids.length;i++){
+			AtsSection section = atsSectionService.get(ids[i]);
+			File file = new File(section.getContent());
+			try {
+				String html = FileUtils.readFileToString(file);
+				sb.append(html);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if(i!=0){
+				array.put(section.getId());
+				section.setIsDel(1);
+				atsSectionService.save(section);
+			}
+		}
+		AtsSection section = atsSectionService.get(ids[0]);
+		File f = new File(section.getContent());
+		try {
+			FileUtils.writeStringToFile(f, sb.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		sendMessage(response, array.toString());
+	}
+	
+	
+	public List<AtsFeedback> addFeedback(AtsSection s,String content,int type,List<AtsFeedback> list){
+		AtsFeedback f = new AtsFeedback();
+		f.setActId(s.getPid()+"");
+		f.setSectionId(s.getId());
+		f.setEditor(s.getEditor());
+		f.setType(type);
+		f.setStatus(0);
+		f.setContent(content);
+		f.setDay(DateUtils.getDate("yyyyMMdd hh:mm:ss"));
+		f.setChecker("管理员");
+		list.add(f);
+		return list;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.acttostatute.dao.NonCaseUsEditionDao">
+    
+	<sql id="nonCaseUsEditionColumns">
+		a.id AS "id",
+		a.edition_id AS "editionId",
+		j.state AS "state",
+		a.content_type AS "contentType",
+		a.library_name AS "libraryName",
+		a.library_edition AS "libraryEdition",
+		a.library_source_const AS "librarySourceConst",
+		a.edition_date AS "editionDate",
+		a.create_time AS "createTime",
+		a.edition_year AS "editionYear",
+		a.status AS "status",
+		a.jurisdiction_id AS "jurisdictionId"
+	</sql>
+	
+	<sql id="nonCaseUsEditionJoins">
+		left join non_case_us_jurisdiction j
+    on a.jurisdiction_id = j.jurisdiction_id
+	</sql>
+    
+	<select id="get" resultType="NonCaseUsEdition">
+		SELECT * FROM non_case_us_edition a
+		WHERE 1=1
+		<if test="id!=null">
+			and a.id = #{id} 
+		</if>
+		<if test="state!=null">
+			and a.library_name like '%'||#{state}||'%'
+		</if>
+		<if test="status!=null">
+			and a.status = #{status}
+		</if>
+		<if test="editionId!=null">
+			and a.edition_id = #{editionId}
+		</if>
+		<if test="libraryEdition">
+			and a.library_edition = #{libraryEdition}
+		</if>
+		<if test="editionId!=0">
+			and a.edition_id = #{editionId}
+		</if>
+	</select>
+	
+	<select id="findList" resultType="NonCaseUsEdition">
+		SELECT * FROM NON_CASE_US_EDITION e 
+		WHERE e.status = 1 
+		<if test="state!=null and state!= '' ">
+			AND e.state = #{state}
+		</if>
+		<if test="editionId!=null and editionId!= '' ">
+			AND e.edition_id = #{editionId}
+		</if>
+		
+		
+	</select>
+	
+	<select id="findAllList" resultType="NonCaseUsEdition">
+		SELECT 
+			<include refid="nonCaseUsEditionColumns"/>
+		FROM non_case_us_edition a
+		<include refid="nonCaseUsEditionJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO non_case_us_edition(
+			id,
+			edition_id,
+			state,
+			content_type,
+			library_name,
+			library_edition,
+			library_source_const,
+			edition_date,
+			create_time,
+			edition_year,
+			status,
+			jurisdiction_id
+		) VALUES (
+			non_case_us_edition_seq.Nextval,
+			#{editionId},
+			#{state},
+			#{contentType},
+			#{libraryName},
+			#{libraryEdition},
+			#{librarySourceConst},
+			#{editionDate},
+			#{createTime},
+			#{editionYear},
+			#{status},
+			#{jurisdictionId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE non_case_us_edition SET 	
+			edition_id = #{editionId},
+			state = #{state},
+			content_type = #{contentType},
+			library_name = #{libraryName},
+			library_edition = #{libraryEdition},
+			library_source_const = #{librarySourceConst},
+			edition_date = #{editionDate},
+			create_time = #{createTime},
+			edition_year = #{editionYear},
+			status = #{status},
+			jurisdiction_id = #{jurisdictionId}
+		WHERE id = #{id}
+	</update>
+	<update id="updateStatus">
+	update non_case_us_edition t
+	   set t.status = 1
+	 where t.edition_id in
+       (select max(t.edition_id)
+          from non_case_us_edition t, non_case_us_library_name l
+         where t.library_name = l.library_name
+         group by t.library_name)
+	</update>
+	<update id="delete">
+		DELETE FROM non_case_us_edition
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

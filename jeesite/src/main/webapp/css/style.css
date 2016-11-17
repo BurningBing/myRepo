@@ -1,0 +1,142 @@
+@CHARSET "UTF-8";
+
+html,body{
+	height:100%;
+}
+body{
+    background-color: black;
+    background-image: url('../image/common/bg.jpg');
+    font-family: Candara;
+    height: 100%;
+}
+
+header{
+	width: 100%;
+    min-width: 960px;
+    height: 60px;
+    position: fixed;
+    background-color: #7a2f00;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+}
+
+nav{
+	width: 80%;
+	min-width: 960px;
+	height: 60px;
+	margin: 0 auto;
+}
+
+nav > i{
+    display: inline-block;
+    height: 60px;
+    color: white;
+    line-height: 60px;
+    padding: 0 10px; 
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: background-color 0.5s;
+}
+
+.menu:hover{
+	background-color: rgba(112, 112, 112, 0.76);
+    border-bottom: 2px solid white;
+}
+
+.search-bar{
+	float: right;
+    height: 60px;
+    display: flex;
+    line-height: 60px;
+    align-items: center;
+}
+
+.search-bar input{
+	width: 400px;
+    height: 40px;
+    outline: none;
+    border: 1px solid #ccc;
+    font-size: 1.1em;
+    padding: 0;
+    padding-left: 10px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.search-btn{
+	width: 40px;
+    height: 40px;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    background-image: url('http://www.easyicon.net/api/resizeApi.php?id=1191708&size=30');
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.5s;
+}
+
+.search-btn:hover{
+	background-color: #ccc;
+}
+
+main{
+	width: 80%;
+	min-width: 960px;
+	margin: 65px auto;
+	color: #fff;
+	overflow: hidden;
+	font-size: 1.1em;
+}
+
+main>div{
+	width:100%;
+	margin-top: 20px;
+}
+
+.data-title{
+	font-size: 24px;
+    margin: 5px 0;
+    color: #ffffff;
+    padding-left: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: rgba(172, 172, 172, 0.47);
+    border-radius: 5px;
+}
+
+.list-data{
+	margin-left: 25px;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-around;
+}
+
+.btn{
+	margin:15px;
+	cursor: pointer;
+	transition: color 0.5s;
+}
+
+.btn:hover{
+	color: orange;
+}
+
+.process{
+	width: 200px;
+    height: 12px;
+    display: inline-block;
+    vertical-align: baseline;
+    background-color: red;
+}
+
+.process-item{
+	text-align: center;
+    height: 40px;
+    line-height: 40px;
+    flex: 1;
+    float: left;
+}

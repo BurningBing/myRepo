@@ -1,0 +1,19 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.PushbackInputStream;
+
+public class TestPushBackInputStream {
+	public static void main(String[] args) throws IOException {
+		String str = "abcdefghijklmnopqrstuvwxyz";
+		ByteArrayInputStream in = new ByteArrayInputStream(str.getBytes());
+		PushbackInputStream stream = new PushbackInputStream(in);
+		int n;
+		while((n=stream.read())!=-1){
+			System.out.println((char)n);
+			stream.unread(60);
+		}
+	
+	}
+}

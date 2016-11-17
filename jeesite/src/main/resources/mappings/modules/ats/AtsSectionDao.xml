@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsSectionDao">
+    
+	<sql id="atsSectionColumns">
+		a.id AS "id",
+		a.pid AS "pid",
+		a.caption AS "caption",
+		a.description AS "description",
+		a.content AS "content",
+		a.bill_number AS "billNumber",
+		a.eff AS "eff",
+		a.exp AS "exp",
+		a.link AS "link",
+		a.short_name AS "shortName",
+		a.update_type AS "updateType",
+		a.editor AS "editor",
+		a.status AS "status",
+		a.is_del AS "isDel",
+		a.is_add AS "isAdd",
+		a.parse_order AS "parseOrder"
+	</sql>
+	
+	<sql id="atsSectionJoins">
+	</sql>
+    
+	<select id="get" resultType="AtsSection">
+		SELECT 
+			<include refid="atsSectionColumns"/>
+		FROM ats_section a
+		<include refid="atsSectionJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AtsSection">
+		SELECT 
+			<include refid="atsSectionColumns"/>
+		FROM ats_section a
+		<include refid="atsSectionJoins"/>
+		where a.is_del = 0
+			<if test="status!=null and status!=''">
+				AND	a.status = #{status}
+			</if>
+			<if test="pid!=null and pid!=''">
+				AND	a.pid = #{pid}
+			</if>
+			<if test="editor!=null and editor!=''">
+				AND a.editor = #{editor}
+			</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		order by a.parse_order
+	</select>
+	
+	<select id="findAllList" resultType="AtsSection">
+		SELECT 
+			<include refid="atsSectionColumns"/>
+		FROM ats_section a
+		<include refid="atsSectionJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findMaxParseOrder" resultType="java.lang.Integer">
+		select max(parse_order) from ats_section where pid = #{pid}
+	</select>
+	
+	<select id="findUnsubmitCount" resultType="java.lang.Integer">
+		select count(1) from ats_section s left join ats_act a on s.pid = a.id where a.status in (2,3) and a.work_mode = 2 and s.status in (1,3) and a.id = #{1}
+	</select>
+	
+	<select id="findCompareSections" resultType = "AtsSection">
+		SELECT * FROM ATS_SECTION 
+			WHERE 
+				STATUS = 3 AND 
+				EDITOR ! = #{editor} AND
+				IS_ADD = #{isAdd} AND
+				SHORT_NAME = #{shortName}
+	</select>
+	
+	<select id="findCompareSection" resultType = "AtsSection">
+		SELECT * FROM ATS_SECTION 
+			WHERE 
+				STATUS = 5 AND 
+				PID = #{0} AND
+				SHORT_NAME = #{1} AND
+				EDITOR ! = #{2} 
+	</select>
+	
+	<select id="getUnsubmitSectionsCount" resultType="java.lang.Integer">
+		select count(1) from ats_section where status in (1,4) and pid = #{0} and editor = #{1} and is_del = 0
+	</select>
+	
+	<select id="getOthersUnsubmitSectionCount" resultType="java.lang.Integer">
+		select count(1) from ats_section where status in (1,4) and pid = #{0} and editor != #{1} and is_del = 0
+	</select>
+	
+	
+	<insert id="insert">
+		<selectKey resultType="java.lang.String" order="BEFORE" keyProperty="id">
+			select seq_section.nextval as id from DUAL
+		</selectKey>
+		INSERT INTO ats_section(
+			id,
+			pid,
+			caption,
+			description,
+			content,
+			bill_number,
+			eff,
+			exp,
+			link,
+			short_name,
+			update_type,
+			editor,
+			status,
+			is_del,
+			is_add,
+			parse_order
+		) VALUES (
+			#{id},
+			#{pid},
+			#{caption},
+			#{description},
+			#{content},
+			#{billNumber},
+			#{eff},
+			#{exp},
+			#{link},
+			#{shortName},
+			#{updateType},
+			#{editor},
+			#{status},
+			#{isDel},
+			#{isAdd},
+			#{parseOrder}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_section SET 	
+			pid = #{pid},
+			caption = #{caption},
+			description = #{description},
+			content = #{content},
+			bill_number = #{billNumber},
+			eff = #{eff},
+			exp = #{exp},
+			link = #{link},
+			short_name = #{shortName},
+			update_type = #{updateType},
+			editor = #{editor},
+			status = #{status},
+			is_del = #{isDel},
+			is_add = #{isAdd},
+			parse_order = #{parseOrder}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="modifyKeyInforBatch">
+		UPDATE ATS_SECTION SET 
+			<if test="eff!=null and eff != ''">
+				eff = #{eff}
+			</if>
+			<if test="exp!=null and exp != ''">
+				exp = #{exp}
+			</if>
+			<if test="link!=null and link != ''">
+				link = #{link}
+			</if>
+		WHERE PID = #{pid}
+	</update>
+	
+	
+	<update id="delete">
+		DELETE FROM ats_section
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

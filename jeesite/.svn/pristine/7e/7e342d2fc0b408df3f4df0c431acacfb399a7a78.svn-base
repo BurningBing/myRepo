@@ -1,0 +1,250 @@
+package com.thinkgem.jeesite.modules.ats.utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import org.activiti.engine.impl.util.json.JSONArray;
+import org.activiti.engine.impl.util.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.FileUtils;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+import com.thinkgem.jeesite.modules.ats.entity.AtsAct;
+import com.thinkgem.jeesite.modules.ats.entity.AtsTask;
+
+public class Illinois extends BaseStateUtils{
+	
+	public Illinois() {
+		super();
+	}
+
+	public Illinois(String state) {
+		super(state);
+	}
+
+	public static void main(String[] args) throws IOException {
+		//下载
+//		String url = "http://www.ilga.gov/legislation/publicacts/default.asp?GA=99";
+//		Document dom = Jsoup.connect(url).timeout(10000).get();
+//		Elements list = dom.select("a[href~=grplist.asp\\?GA=99&Min=\\d+\\&Max=\\d+]");
+//		for(Element el:list){
+//			dom = Jsoup.connect(el.absUrl("href")).timeout(10000).get();
+//			Elements lis = dom.select("li");
+//			for(Element li:lis){
+//				String billNumber = li.select("a").first().text();
+//				if(RegexUtil.isFind("\\$", billNumber)){
+//					continue;
+//				}
+//				String href = li.select("a").first().absUrl("href");
+//				dom = Jsoup.connect(href).timeout(10000).get();
+//				String eff = "";
+//				if(!RegexUtil.isFind("\\d+", dom.select("div[class=content]").first().text())){
+//					continue;
+//				}else{
+//					eff = RegexUtil.match("\\d+/\\d+/\\d+", dom.select("div[class=content]").first().text());
+//				}
+//				String html = "";
+//				if(dom.getElementsContainingOwnText("click here").size()>0){
+//					href = dom.getElementsContainingOwnText("click here").first().absUrl("href");
+//					dom = Jsoup.connect(href).timeout(10000).get();
+//				}
+//				if(dom.select("table[width=490]").size()>0){
+//					html = dom.select("table[width=490]").first().html();
+//				}else{
+//					html = dom.body().html();
+//				}
+//				System.out.println(html);
+//			}
+//			break;
+//		}
+		
+		
+		
+		// 解析
+		File file = new File("E:\\test.html");
+		try {
+			String html = FileUtils.readFileToString(file);
+			html = RegexUtil.replace("<!--[\\s\\S]*?-->", "", html);
+			html = RegexUtil.replace("</?a[^>]*?>", "", html);
+			html = RegexUtil.replace("<style[^>]*?>[\\s\\S]*?</style>", "", html);
+			html = RegexUtil.replace("\n", "", html);
+			html = RegexUtil.replace("\\s{2,}", "", html);
+			html = RegexUtil.replace("</?td[^>]*?>", "", html);
+			html = RegexUtil.replace("<tr[^>]*?>", "<p>", html);
+			html = RegexUtil.replace("</tr>", "</p>", html);
+			html = RegexUtil.replace("<table[^>]*?>", "<div>", html);
+			html = RegexUtil.replace("</table>", "</div>", html);
+			html = RegexUtil.replace("</?tbody>|<br>", "", html);
+			while(RegexUtil.isFind("<([^t/][^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", html)){
+				html = RegexUtil.replace("<([^t/][^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", "", html);
+			}
+			html = RegexUtil.replace("</div><div[^>]*?>", "", html);
+			html = RegexUtil.replace("</?code>", "", html);
+			html = RegexUtil.replace("</p><p>(?!(&|-))", "", html);
+			html = RegexUtil.replace("(?<!(&nbsp;))(&nbsp;){4}(?!&nbsp)", "", html);
+			while(RegexUtil.isFind("(<p>(&nbsp;){5,}([\\s\\S](?!<p>))*?)</p><p>(?!(&nbsp;|(<[^>]*?>)?[A-Z][a-z]))", html)){
+				html = RegexUtil.replace("(<p>(&nbsp;){5,}([\\s\\S](?!<p>))*?)</p><p>(?!(&nbsp;|(<[^>]*?>)?[A-Z][a-z]))", "$1", html);
+			}
+			html = RegexUtil.replace("<p>(&nbsp;){8}([\\s\\S]*?)</p>", "<blockquote>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$2</blockquote>", html);
+			html = RegexUtil.replace("<p>", "<p>&nbsp;&nbsp;&nbsp;&nbsp;", html);
+					
+			System.out.println(html);
+			
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void doCheckingUpdate(AtsTask task) {
+		Document dom = null;
+		try {
+			dom = Jsoup.connect(task.getUrl()).timeout(10000).get();
+		} catch (IOException e) {
+			count = -1;
+			System.out.println("连接失败");
+			return;
+		}
+		Elements list = dom.select("a[href~=grplist.asp\\?GA=99&Min=\\d+\\&Max=\\d+]");
+		for(Element el:list){
+			try {
+				dom = Jsoup.connect(el.absUrl("href")).timeout(10000).get();
+			} catch (IOException e) {
+				continue;
+				
+			}
+			Elements lis = dom.select("li");
+			for(Element li:lis){
+				String billNumber = li.select("a").first().text();
+				if(RegexUtil.isFind("(H|S)B\\s\\d+\\W*?\\$", billNumber)){
+					continue;
+				}
+				billNumber = RegexUtil.match("Public Act \\d+-\\d+", billNumber);
+				String href = li.select("a").first().absUrl("href");
+				if(allActs.contains(href)){
+					continue;
+				}
+				
+				
+				try {
+					dom = Jsoup.connect(href).timeout(10000).get();
+				} catch (IOException e) {
+					continue;
+				}
+				String eff = "";
+				if(!RegexUtil.isFind("\\d+", dom.select("div[class=content]").first().text())){
+					continue;
+				}else{
+					eff = RegexUtil.match("\\d+/\\d+/\\d+", dom.select("div[class=content]").first().text());
+				}
+				String html = "";
+				if(dom.getElementsContainingOwnText("click here").size()>0){
+					try {
+						dom = Jsoup.connect(dom.getElementsContainingOwnText("click here").first().absUrl("href")).timeout(10000).get();
+					} catch (IOException e) {
+						continue;
+					}
+				}
+				if(dom.select("table[width=490]").size()>0){
+					html = dom.select("table[width=490]").first().html();
+				}else{
+					html = dom.body().html();
+				}
+				FileUtils.writeToFile(path+File.separator+billNumber+".html", html, false);
+				File file = new File(path+File.separator+billNumber+".html");
+				AtsAct temp = new AtsAct();
+				temp.setBillNumber(billNumber);
+				temp.setState("Illinois");
+				temp.setFileSize(file.length()/1024);
+				temp.setType(2);
+				temp.setSessionYear("2016");
+				temp.setDay(DateUtils.getDate("yyyyMMdd"));
+				temp.setWorkMode(1);
+				temp.setDownloadFile(file.getAbsolutePath());
+				temp.setEffectiveDate(eff);
+				temp.setUrl(href);
+				System.out.println(billNumber);
+				temp.setRemark("");
+				atsActService.save(temp);
+				count++;
+				allActs.add(href);
+			}
+		}
+		
+	}
+
+	@Override
+	public JSONObject doParseAct(AtsAct act) {
+		JSONObject root = new JSONObject();
+		JSONArray array = new JSONArray();
+		String html = "";
+		root.put("children", array);
+		try {
+			html = FileUtils.readFileToString(new File(act.getDownloadFile()),"utf-8");
+		} catch (IOException e) {
+			System.err.println("错误类型:文件不存在。错误地址:Florida.java 78行。");
+		}
+		html = RegexUtil.replace("<!--[\\s\\S]*?-->", "", html);
+		html = RegexUtil.replace("</?a[^>]*?>", "", html);
+		html = RegexUtil.replace("<style[^>]*?>[\\s\\S]*?</style>", "", html);
+		html = RegexUtil.replace("\n", "", html);
+		html = RegexUtil.replace("\\s{2,}", "", html);
+		html = RegexUtil.replace("</?td[^>]*?>", "", html);
+		html = RegexUtil.replace("<tr[^>]*?>", "<p>", html);
+		html = RegexUtil.replace("</tr>", "</p>", html);
+		html = RegexUtil.replace("<table[^>]*?>", "<div>", html);
+		html = RegexUtil.replace("</table>", "</div>", html);
+		html = RegexUtil.replace("</?tbody>|<br>", "", html);
+		html = RegexUtil.replace("</div><div[^>]*?>", "", html);
+		html = RegexUtil.replace("</?code>", "", html);
+		html = RegexUtil.replace("&nbsp;", "", html);
+		while(RegexUtil.isFind("<([^t/][^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", html)){
+			html = RegexUtil.replace("<([^t/][^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", "", html);
+		}
+		html = RegexUtil.replace("</p><p>((<u>|<strike>)?[a-z])", "$1", html);
+		List<String> list = RegexUtil.matchAllList("<p>\\(\\d+ ILCS[\\s\\S]*?(?=<p>\\(\\d+ ILCS|<b>)", html);
+		for(String str:list){
+			JSONObject json = new JSONObject();
+			
+			String shortName = RegexUtil.match("<p>.*?</p>", str);
+			String update = "";
+			if(RegexUtil.isFind("new", shortName)){
+				update = "1";
+			}else{
+				update = "2";
+			}
+			shortName = RegexUtil.replace("</?p>|\\(|\\)|new", "", shortName).trim();
+			str = RegexUtil.replaceFirst("<p>.*?</p>", "", str);
+			String temp = RegexUtil.match("<p>.*?</p>", str);
+			temp = RegexUtil.replace("<[^>]*?>", "", temp).trim();
+			String caption = RegexUtil.match("Sec\\. \\d+(-\\d+)?", temp).trim();
+			if(caption.isEmpty()){
+				str = RegexUtil.replaceFirst("<p>.*?</p>", "", str);
+				temp = RegexUtil.match("<p>.*?</p>", str);
+				temp = RegexUtil.replace("<[^>]*?>", "", temp).trim();
+				caption = RegexUtil.match("Sec\\. \\d+(-\\d+)?", temp).trim();
+				
+			}
+			String description = RegexUtil.replace("Sec\\. \\d+(-\\d+)?\\.", "", temp).trim();
+			str = RegexUtil.replaceFirst("<p>.*?</p>", "", str);
+			str = RegexUtil.replace("<u>", "<font color=\"#f00\"><u>", str);
+			str = RegexUtil.replace("</u>", "</u></font>", str);
+			str = RegexUtil.replace("<strike>", "<font color=\"#f00\"><strike>", str);
+			str = RegexUtil.replace("</strike>", "</strike></font>", str);
+			json.put("caption", caption);
+			json.put("description", description);
+			json.put("content", str);
+			json.put("update", update);
+			array.put(json);
+		}
+		return root;
+	}
+}
+
+

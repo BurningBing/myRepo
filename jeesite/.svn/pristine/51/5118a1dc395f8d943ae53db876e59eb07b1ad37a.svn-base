@@ -1,0 +1,29 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.File;
+import java.io.IOException;
+
+import com.thinkgem.jeesite.common.utils.FileUtils;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+
+public class TestParse {
+	public static void main(String[] args) throws IOException {
+		File file = new File("E:\\test.html");
+		String html = FileUtils.readFileToString(file);
+		html = RegexUtil.replace("<span[^>]*?bold[^>]*?>([\\s\\S]*?)</span>", "<b>$1</b>", html);
+		html = RegexUtil.replace("<span[^>]*?underline[^>]*?>([\\s\\S]*?)</span>", "<font color=\"#f00\"><u>$1</u></font>", html);
+		html = RegexUtil.replace("</?span[^>]*?>", "", html);
+		html = RegexUtil.replace("</?td[^>]*?>", "", html);
+		html = RegexUtil.replace("<tr[^>]*?>", "<p>", html);
+		html = RegexUtil.replace("</tr>", "</p>", html);
+		html = RegexUtil.replace("</?table[^>]*?>", "", html);
+		html = RegexUtil.replace("</?tbody[^>]*?>", "", html);
+		html = RegexUtil.replace("<p>\\s*", "<p>", html);
+		html = RegexUtil.replace("(</p>\\s*?<p>)((<[^>]*?>)*)(?!&nbsp;)", " $2", html);
+		html = RegexUtil.replace("–", "-", html);
+		html = RegexUtil.replace("</font>\\s*?<font[^>]*?>", " ", html);
+		html = RegexUtil.replace("</u>\\s*?<u>", " ", html);
+		System.out.println(html);
+		
+	}
+}

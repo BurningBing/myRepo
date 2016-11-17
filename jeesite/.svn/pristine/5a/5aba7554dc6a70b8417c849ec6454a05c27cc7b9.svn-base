@@ -1,0 +1,147 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.ats.service;
+
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.impl.util.json.JSONArray;
+import org.activiti.engine.impl.util.json.JSONObject;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.modules.ats.dao.AtsActDao;
+import com.thinkgem.jeesite.modules.ats.entity.AtsAct;
+
+/**
+ * actService
+ * @author Chad
+ * @version 2016-03-09
+ */
+@Service
+@Transactional(readOnly = true)
+public class AtsActService extends CrudService<AtsActDao, AtsAct> {
+	JSONArray tree = null;
+	JSONObject cur = null;
+	int index = 0;
+	
+
+	public AtsAct get(String id) {
+		AtsAct act = new AtsAct();
+		act.setId(id);
+		return super.get(act);
+	}
+	
+	public List<AtsAct> findList(AtsAct atsAct) {
+		return super.findList(atsAct);
+	}
+	
+	public Page<AtsAct> findPage(Page<AtsAct> page, AtsAct atsAct) {
+		return super.findPage(page, atsAct);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(AtsAct atsAct) {
+		super.save(atsAct);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(AtsAct atsAct) {
+		super.delete(atsAct);
+	}
+	
+	public List<String> findDownloadedActs(String state){
+		return super.dao.findDownloadedActs(state);
+	}
+	
+	public int findCount(AtsAct act){
+		return super.dao.findCount(act);
+	}
+	
+	public List<String> findUnsignedStates(int type){
+		return super.dao.findUnsignedStates(type);
+	}
+
+	public List<Map<String, String>> findUnsignedActsByState(String editor,String state,String type){
+		return super.dao.findUnsignedActsByState(editor,state,type);
+	}
+
+	public List<Map<String, String>> loadMyActs(String editor,String type){
+		return super.dao.loadMyActs(editor,type);
+	}
+	
+	public JSONArray getActTreeByEditor(String editor,String type){
+		tree = new JSONArray();
+		cur = null;
+		List<Map<String, String>> list = null;
+		if(type.equals("3")){
+			list = super.dao.getFeedbackTree(editor);
+		}else{
+			list = super.dao.getActTreeByEditor(editor, type);
+		}
+		
+		for(Map<String, String> map:list){
+			
+			biuldTree(map);
+		}
+		System.out.println(tree.toString());
+		return tree;
+	}
+	
+	public void biuldTree(Map<String, String> map){
+		for(int i=0;i<tree.length();i++){
+			if(tree.getJSONObject(i).getString("name").equals(map.get("STATE"))){
+				cur = tree.getJSONObject(i);
+				break;
+			}else{
+				cur = null;
+			}
+		}
+		if(cur==null){
+			cur = new JSONObject();
+			cur.put("name", map.get("STATE"));
+			cur.put("children", new JSONArray());
+			tree.put(cur);
+		}
+		JSONObject bill = getBillJson(map);
+		if(map.get("CAPTION")!=null){
+			JSONArray aSect = null;
+			if(!bill.has("children")){
+				aSect = new JSONArray();
+				bill.put("children", aSect);
+			}else{
+				aSect = bill.getJSONArray("children");
+			}
+			
+			JSONObject sect = new JSONObject();
+			sect.put("id", map.get("ID"));
+			sect.put("name", map.get("CAPTION"));
+			sect.put("pid", map.get("PID"));
+			sect.put("status", map.get("STATUS"));
+			aSect.put(sect);
+		}
+	}
+	
+	public JSONObject getBillJson(Map<String, String> map){
+		JSONObject bill = null;
+		JSONArray bills = cur.getJSONArray("children");
+		for(int i=0;i<bills.length();i++){
+			if(bills.getJSONObject(i).getString("name").equals(map.get("BILL_NUMBER"))){
+				bill = bills.getJSONObject(i);
+				return bill;
+			}
+		}
+		if(bill == null){
+			bill = new JSONObject();
+			bill.put("name", map.get("BILL_NUMBER"));
+			bill.put("id", map.get("PID"));
+			bill.put("type", map.get("TYPE"));
+			bills.put(bill);
+		}
+		return bill;
+	}
+	
+}

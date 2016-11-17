@@ -1,0 +1,48 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.ats.entity;
+
+import javax.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.Length;
+
+import com.thinkgem.jeesite.common.persistence.DataEntity;
+
+/**
+ * 签名Entity
+ * @author Chad
+ * @version 2016-03-20
+ */
+public class AtsSign extends DataEntity<AtsSign> {
+	
+	private static final long serialVersionUID = 1L;
+	private Integer pid;		// pid
+	private String editor;		// editor
+	
+	public AtsSign() {
+		super();
+	}
+
+	public AtsSign(String id){
+		super(id);
+	}
+
+	@NotNull(message="pid不能为空")
+	public Integer getPid() {
+		return pid;
+	}
+
+	public void setPid(Integer pid) {
+		this.pid = pid;
+	}
+	
+	@Length(min=1, max=200, message="editor长度必须介于 1 和 200 之间")
+	public String getEditor() {
+		return editor;
+	}
+
+	public void setEditor(String editor) {
+		this.editor = editor;
+	}
+	
+}

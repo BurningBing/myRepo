@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsSignDao">
+    
+	<sql id="atsSignColumns">
+		a.id AS "id",
+		a.pid AS "pid",
+		a.editor AS "editor",
+		a.status,
+		a.upload_file,
+		a.page_number,
+		a.section_count
+	</sql>
+	
+	<sql id="atsSignJoins">
+		
+	</sql>
+    
+	<select id="get" resultType="AtsSign">
+		SELECT 
+			<include refid="atsSignColumns"/>
+		FROM ats_sign a
+		<include refid="atsSignJoins"/>
+		<where>
+			<if test="id!='' and id!=null">
+				and a.id = #{id}
+			</if>
+			<if test="pid!='' and pid!=null">
+				and a.pid = #{pid}
+			</if>
+			<if test="editor!='' and editor!=null">
+				and a.editor = #{editor}
+			</if>
+			<if test="status!='' and status!=null">
+				and a.status = #{status}
+			</if>
+		</where>
+		
+	</select>
+	
+	<select id="findList" resultType="AtsSign">
+		SELECT 
+			<include refid="atsSignColumns"/>
+		FROM ats_sign a
+		<include refid="atsSignJoins"/>
+		<where>
+			<if test="pid!='' and pid!=null">
+				AND a.pid = #{pid}
+			</if>
+			<if test="status!='' and status!=null">
+				AND a.status = #{status}
+			</if>
+			<if test="editor!='' and editor!=null">
+				AND a.editor = #{editor}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AtsSign">
+		SELECT 
+			<include refid="atsSignColumns"/>
+		FROM ats_sign a
+		<include refid="atsSignJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getSignedCount" resultType="java.lang.Integer">
+		select count(1) from ats_sign where editor = #{1} and status = 1
+	</select>
+	
+	<select id="getOthers" resultType="AtsSign">
+		select * from ats_sign where editor !=#{editor} and pid = #{pid}
+	</select>
+	
+	<insert id="insert">
+		<selectKey resultType="java.lang.String" order="BEFORE" keyProperty="id">
+			select seq_sign.nextval as id from DUAL
+		</selectKey>
+		INSERT INTO ats_sign(
+			id,
+			pid,
+			editor,
+			status,
+			upload_file,
+			page_number,
+			section_count
+		) VALUES (
+			#{id},
+			#{pid},
+			#{editor},
+			#{status},
+			#{uploadFile},
+			#{pageNumber},
+			#{sectionCount}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_sign SET 	
+			pid = #{pid},
+			editor = #{editor},
+			status = #{status},
+			upload_file = #{uploadFile},
+			page_number = #{pageNumber},
+			section_count = #{sectionCount}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM ats_sign
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

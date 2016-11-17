@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsSignDao">
+    
+	<sql id="atsSignColumns">
+		a.id AS "id",
+		a.pid AS "pid",
+		a.editor AS "editor"
+	</sql>
+	
+	<sql id="atsSignJoins">
+	</sql>
+    
+	<select id="get" resultType="AtsSign">
+		SELECT 
+			<include refid="atsSignColumns"/>
+		FROM ats_sign a
+		<include refid="atsSignJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AtsSign">
+		SELECT 
+			<include refid="atsSignColumns"/>
+		FROM ats_sign a
+		<include refid="atsSignJoins"/>
+		<where>
+			<if test="pid!='' and pid!=null">
+				AND a.pid = #{pid}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AtsSign">
+		SELECT 
+			<include refid="atsSignColumns"/>
+		FROM ats_sign a
+		<include refid="atsSignJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getSignedCount" resultType="java.lang.Integer">
+		select count(1) from ats_sign where pid = #{pid}
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO ats_sign(
+			id,
+			pid,
+			editor
+		) VALUES (
+			seq_sign.nextval,
+			#{pid},
+			#{editor}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_sign SET 	
+			pid = #{pid},
+			editor = #{editor}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM ats_sign
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

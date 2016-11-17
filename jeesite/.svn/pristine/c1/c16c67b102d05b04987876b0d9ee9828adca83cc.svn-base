@@ -1,0 +1,350 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.ats.web;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.activiti.engine.impl.util.json.JSONArray;
+import org.activiti.engine.impl.util.json.JSONObject;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.alibaba.druid.support.json.JSONUtils;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.utils.UploadUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.websocket.GlobalHandler;
+import com.thinkgem.jeesite.modules.ats.entity.AtsAct;
+import com.thinkgem.jeesite.modules.ats.entity.AtsSection;
+import com.thinkgem.jeesite.modules.ats.entity.AtsSign;
+import com.thinkgem.jeesite.modules.ats.service.AtsActService;
+import com.thinkgem.jeesite.modules.ats.service.AtsSectionService;
+import com.thinkgem.jeesite.modules.ats.service.AtsSignService;
+import com.thinkgem.jeesite.modules.ats.service.AtsTaskService;
+import com.thinkgem.jeesite.modules.ats.utils.BaseStateUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * actController
+ * @author Chad
+ * @version 2016-03-09
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/atsAct")
+public class AtsActController extends BaseController {
+
+	@Autowired
+	private AtsActService atsActService;
+	@Autowired
+	private AtsSectionService atsSectionService;
+	@Autowired
+	private AtsTaskService atsTaskService;
+	@Autowired
+	private AtsSignService atsSignService;
+	
+	@ModelAttribute
+	public AtsAct get(@RequestParam(required=false) String id) {
+		AtsAct entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = atsActService.get(id);
+		}
+		if (entity == null){
+			entity = new AtsAct();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("ats:atsAct:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(AtsAct atsAct, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<AtsAct> page = atsActService.findPage(new Page<AtsAct>(request, response), atsAct); 
+		model.addAttribute("page", page);
+		return "modules/ats/atsActList";
+	}
+
+	/**
+	 * 找到未签名的州
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="findUnsignedStates")
+	public void findUnsignedStates(HttpServletRequest request,HttpServletResponse response){
+		int type = Integer.parseInt(request.getParameter("type"));
+		List<String> states = atsActService.findUnsignedStates(type);
+		sendMessage(response, JSONUtils.toJSONString(states));
+	}
+	
+	/**
+	 * 查找未签名Act列表
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="findUnsignedActsByState")
+	public void findUnsignedActsByState(HttpServletRequest request,HttpServletResponse response){
+		String state = request.getParameter("state");
+		String type = request.getParameter("type");
+		List<Map<String, String>> list = atsActService.findUnsignedActsByState(UserUtils.getUser().getName(),state,type);
+		String json = JSONUtils.toJSONString(list);
+		sendMessage(response, json.toString());
+	}
+	
+	@RequiresPermissions("ats:atsAct:view")
+	@RequestMapping(value = "form")
+	public String form(AtsAct atsAct, Model model) {
+		model.addAttribute("atsAct", atsAct);
+		return "modules/ats/atsActForm";
+	}
+
+	@RequiresPermissions("ats:atsAct:edit")
+	@RequestMapping(value = "save")
+	public String save(AtsAct atsAct, Model model, RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, atsAct)){
+			return form(atsAct, model);
+		}
+		atsActService.save(atsAct);
+		addMessage(redirectAttributes, "保存act成功");
+		return "redirect:"+Global.getAdminPath()+"/ats/atsAct/?repage";
+	}
+	
+	@RequiresPermissions("ats:atsAct:edit")
+	@RequestMapping(value = "delete")
+	public String delete(AtsAct atsAct, RedirectAttributes redirectAttributes) {
+		atsActService.delete(atsAct);
+		addMessage(redirectAttributes, "删除act成功");
+		return "redirect:"+Global.getAdminPath()+"/ats/atsAct/?repage";
+	}
+
+	/**
+	 * 解析HTML Act
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="parseAct")
+	public void parseAct(HttpServletRequest request,HttpServletResponse response){
+		AtsAct act = atsActService.get(request.getParameter("id"));
+		act.setStatus(2);
+		atsActService.save(act);
+		if(act.getType()==2){
+			AtsSign sign = new AtsSign();
+			sign.setEditor(UserUtils.getUser().getName());
+			sign.setPid(Integer.parseInt(act.getId()));
+			atsSignService.save(sign);
+		}
+		try {
+			@SuppressWarnings("unchecked")
+			Class<BaseStateUtils> claze = (Class<BaseStateUtils>) Class.forName(Global.STATE_PACKAGE+"."+act.getState());
+			claze.newInstance().parseAct(act);
+			JSONArray tree = atsActService.getActTreeByEditor(UserUtils.getUser().getName(), act.getType()+"");
+			sendMessage(response, tree.toString());
+			//发送推送消息，告知别人该ACT已被签名
+			GlobalHandler.afterSignUp(Integer.parseInt(act.getId()));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 显示个人签名的HTML Act
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="showMyAct")
+	public void showMyAct(HttpServletRequest request,HttpServletResponse response){
+		JSONArray tree = atsActService.getActTreeByEditor(UserUtils.getUser().getName(), request.getParameter("type"));
+		sendMessage(response, tree.toString());		
+	}
+	
+	@RequestMapping(value="viewSnapshot")
+	public void viewSnapshot(HttpServletRequest request,HttpServletResponse response){
+		File file = null;
+		if(request.getParameter("filePath")!=null){
+			file = new File(request.getParameter("filePath"));
+		}else{
+			AtsAct act = atsActService.get(request.getParameter("id"));
+			file = new File(act.getDownloadFile());
+		}
+		String fileType = RegexUtil.match("(?<=\\.)((?!\\.).)*?$", file.getName());
+		if(fileType.equals("pdf")){
+			response.setContentType("application/pdf");
+			try {
+				DataOutputStream dos = new DataOutputStream(response.getOutputStream());
+				DataInputStream dis = new DataInputStream(new FileInputStream(file));
+				response.setContentLength(dis.available());
+				byte[] b = new byte[2048];
+				int length = 0;
+				while((length=dis.read(b)) != -1){
+					dos.write(b,0,length);
+					dos.flush();
+				}
+				dis.close();
+				dos.close();
+			} catch (IOException e) {
+				System.out.println("IO 异常");
+			}
+		}else if(fileType.equals("html")){
+			try {
+				PrintWriter writer =  response.getWriter();
+				String html = Jsoup.parse(file, "utf-8").html();
+				writer.write(html);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * 创建新的Section
+	 * @param act
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="createNewSection")
+	public void createNewSection(AtsAct act,HttpServletRequest request, HttpServletResponse response){
+		JSONObject json = new JSONObject();
+		int parseOrder = atsSectionService.findMaxParseOrder(act.getId());
+		String shortName = atsTaskService.getByState(act.getState()).getShortName();
+		AtsSection section =  atsSectionService.addNewSection(parseOrder, shortName, act);
+		json.put("id", section.getId());
+		json.put("type", act.getType()+"");
+		json.put("pid", act.getId());
+		json.put("name", section.getCaption());
+		sendMessage(response, json.toString());
+	}
+	
+	/**
+	 * 查看Bill 状态历史页面
+	 * @param act
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="viewBillHistory")
+	public void viewBillHistory(AtsAct act,HttpServletRequest request,HttpServletResponse response){
+		JSONObject json = new JSONObject();
+		String url = act.getUrl();
+		try {
+			Document dom = Jsoup.connect(url).timeout(10000).get();
+			String html = dom.html();
+			html = RegexUtil.replace("<a[^>]*?>|</a>", "", html);
+			html = RegexUtil.replace("<img[^>]*?>", "", html);
+			html = RegexUtil.replace("<input[^>]*?>", "", html);
+			html = RegexUtil.replace("<select[^>]*?>[\\s\\S]*?</select>", "", html);
+			html = RegexUtil.replace("<link[^>]*?>", "", html);
+			html = RegexUtil.replace("(Approved)", "<mark>$1</mark>", html);
+			
+			json.put("html", html);
+		} catch (IOException e) {
+			e.printStackTrace();
+			json.put("html", "<p style='font-weight:bold'>链接失败，请重试或跳到<a href='"+url+"' target='blank'>外部链接</a></p>");
+		}
+		sendMessage(response, json.toString());
+		
+		
+		
+		
+		
+	}
+
+	/**
+	 * 下载PDF文件
+	 * @param act
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="downloadAct")
+	public void downloadAct(AtsAct act, HttpServletRequest request,HttpServletResponse response){
+		File file = new File(act.getDownloadFile());
+		response.setHeader("Location", file.getName());
+		response.setHeader("Cache-Control", "max-age=" + 100000);
+		response.setHeader("Content-Disposition", "attachment; filename=" + file.getName());
+		response.setContentLength((int)file.length());
+		try {
+			OutputStream outputStream = response.getOutputStream();
+			InputStream inputStream = new FileInputStream(file);
+			byte[] buffer = new byte[1024];
+			int i = -1;
+			while ((i = inputStream.read(buffer)) != -1) {
+				outputStream.write(buffer, 0, i);
+			}
+			outputStream.flush();
+			outputStream.close();
+			inputStream.close();
+			outputStream = null;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 上传HTML文件，进行解析
+	 * @param act
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="uploadAct")
+	public void uploadAct(AtsAct act,HttpServletRequest request,HttpServletResponse response){
+		UploadUtils uploadUtils = new UploadUtils(act.getBillNumber());
+		request.setAttribute("day", act.getDay());
+		request.setAttribute("state", act.getState());
+		String[] infors = uploadUtils.uploadFile(request);
+		//上传成功
+		if(infors[0].equals("true")){
+			//删除历史数据
+			AtsSection temp = new AtsSection();
+			temp.setPid(Integer.parseInt(act.getId()));
+			temp.setEditor(UserUtils.getUser().getName());
+			List<AtsSection> historyList = atsSectionService.findList(temp);
+			for(AtsSection section:historyList){
+				atsSectionService.delete(section);
+			}
+			//调用解析程序
+			act.setUploadFile(infors[1]+File.separator+infors[2]+".html");
+			//开始解析
+			try {
+				@SuppressWarnings("unchecked")
+				Class<BaseStateUtils> claze = (Class<BaseStateUtils>) Class.forName(Global.STATE_PACKAGE+"."+act.getState());
+				claze.newInstance().parseAct(act);
+				JSONArray tree = atsActService.getActTreeByEditor(UserUtils.getUser().getName(), act.getType()+"");
+				sendMessage(response, tree.toString());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * 标记废除的ACT
+	 * @param act
+	 * @param request
+	 * @param response
+	 */
+	@RequestMapping(value="deleteAct")
+	public void deleteAct(AtsAct act,HttpServletRequest request,HttpServletResponse response){
+		act.setDelFlag("1");
+		atsActService.save(act);
+		sendMessage(response, "");
+	}
+}

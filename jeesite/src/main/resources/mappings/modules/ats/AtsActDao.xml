@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsActDao">
+    
+	<sql id="atsActColumns">
+		a.id AS "id",
+		a.state AS "state",
+		a.bill_number AS "billNumber",
+		a.url AS "url",
+		a.download_file AS "downloadFile",
+		a.file_size AS "fileSize",
+		a.type AS "type",
+		a.day AS "day",
+		a.work_mode AS "workMode",
+		a.status AS "status",
+		a.del_flag AS "delFlag",
+		a.effective_date As "effectiveDate",
+		a.remark AS "remark",
+		a.session_year AS "sessionYear",
+		a.page_count AS "pageCount"
+	</sql>
+	
+	<sql id="atsActJoins">
+	</sql>
+    
+	<select id="get" resultType="AtsAct">
+		SELECT * FROM ats_act a
+		<include refid="atsActJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AtsAct">
+		SELECT 
+			<include refid="atsActColumns"/>
+		FROM ats_act a
+		<include refid="atsActJoins"/>
+		<where>
+			<if test="delFlag!='' and delFlag!=null">
+				AND a.del_flag = #{delFlag}
+			</if>
+			<if test="status!='' and status!=null">
+				AND a.status = #{status}
+			</if>
+			<if test="state!='' and state!=null">
+				AND a.state = #{state}
+			</if>
+			<if test="day!='' and day!=null">
+				AND a.day = #{day}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findCount" resultType="java.lang.Integer">
+		select count(1) from ats_act  where status = 1 and del_flag = 0 and state = #{1}
+	</select>
+	
+	<select id="findDownloadedActs" resultType="java.lang.String">
+		select url from ats_act where state = #{state}
+	</select>
+	
+	<select id="findUnsignedStates" resultType="java.lang.String">
+		select state from ats_act where status = 1  and del_flag = 0 group by state 
+	</select>
+	
+	<select id="findDateByState" resultType="java.lang.String">
+		select day from ats_act where status = 1 and state = #{1}  and del_flag = 0 group by day order by day
+	</select>
+	
+	<select id="findSignActs" resultType="AtsAct">
+		select * from ats_act where status = 1 and del_flag = 0 and state = #{0} and rownum &lt;=#{1} and id not in (select id from ats_sign where editor = #{2})    order by id
+	</select>
+	
+	<select id="findActsByEditor" resultType="AtsAct">
+		select a.* from ats_act a left join ats_sign s on a.id = s.pid where s.editor = #{1} and s.status &lt;=2
+	</select>
+	
+	<insert id="insert">
+		<selectKey resultType="java.lang.String" order="BEFORE" keyProperty="id">
+			select seq_act.nextval as id from DUAL
+		</selectKey>
+		INSERT INTO ats_act(
+			id,
+			state,
+			bill_number,
+			url,
+			download_file,
+			file_size,
+			type,
+			day,
+			work_mode,
+			status,
+			del_flag,
+			remark,
+			effective_date,
+			page_count,
+			session_year
+		) VALUES (
+			#{id},
+			#{state},
+			#{billNumber},
+			#{url},
+			#{downloadFile},
+			#{fileSize},
+			#{type},
+			#{day},
+			#{workMode},
+			#{status},
+			#{delFlag},
+			#{remark},
+			#{effectiveDate},
+			#{pageCount},
+			#{sessionYear}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_act SET 	
+			state = #{state},
+			bill_number = #{billNumber},
+			url = #{url},
+			download_file = #{downloadFile},
+			file_size = #{fileSize},
+			type = #{type},
+			day = #{day},
+			work_mode = #{workMode},
+			status = #{status},
+			del_flag = #{delFlag},
+			remark = #{remark},
+			page_count = #{pageCount}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE ats_act SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,61 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import com.thinkgem.jeesite.common.utils.FileUtils;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+
+public class TestIllinois {
+	public static void main(String[] args) {
+		File file = new File("E:\\test.html");
+		try {
+			String html = FileUtils.readFileToString(file);
+			html = RegexUtil.replace("<!--[\\s\\S]*?-->", "", html);
+			html = RegexUtil.replace("</?a[^>]*?>", "", html);
+			html = RegexUtil.replace("<style[^>]*?>[\\s\\S]*?</style>", "", html);
+			html = RegexUtil.replace("\n", "", html);
+			html = RegexUtil.replace("\\s{2,}", "", html);
+			html = RegexUtil.replace("</?td[^>]*?>", "", html);
+			html = RegexUtil.replace("<tr[^>]*?>", "<p>", html);
+			html = RegexUtil.replace("</tr>", "</p>", html);
+			html = RegexUtil.replace("<table[^>]*?>", "<div>", html);
+			html = RegexUtil.replace("</table>", "</div>", html);
+			html = RegexUtil.replace("</?tbody>|<br>", "", html);
+			html = RegexUtil.replace("</div><div[^>]*?>", "", html);
+			html = RegexUtil.replace("</?code>", "", html);
+			html = RegexUtil.replace("&nbsp;", "", html);
+			while(RegexUtil.isFind("<([^t/][^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", html)){
+				html = RegexUtil.replace("<([^t/][^>]*?)(\\s[^>]*?)?>\\s*?</\\1>", "", html);
+			}
+			html = RegexUtil.replace("</p><p>((<u>|<strike>)?[a-z])", "$1", html);
+			List<String> list = RegexUtil.matchAllList("<p>\\(\\d+ ILCS[\\s\\S]*?(?=<p>\\(\\d+ ILCS|<b>)", html);
+			for(String str:list){
+				String shortName = RegexUtil.match("<p>.*?</p>", str);
+				String update = "";
+				if(RegexUtil.isFind("new", shortName)){
+					update = "1";
+				}else{
+					update = "2";
+				}
+				shortName = RegexUtil.replace("</?p>|\\(|\\)|new", "", shortName).trim();
+				str = RegexUtil.replaceFirst("<p>.*?</p>", "", str);
+				String temp = RegexUtil.match("<p>.*?</p>", str);
+				temp = RegexUtil.replace("<[^>]*?>", "", temp).trim();
+				String caption = RegexUtil.match("Sec\\. \\d+", temp).trim();
+				String description = RegexUtil.replace("Sec\\. \\d+\\.", "", temp).trim();
+				System.out.println(temp);
+				System.out.println(caption);
+				System.out.println(description);
+				System.out.println("***************************");
+				str = RegexUtil.replaceFirst("<p>.*?</p>", "", str);
+				System.out.println(str);
+			}
+			
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+}

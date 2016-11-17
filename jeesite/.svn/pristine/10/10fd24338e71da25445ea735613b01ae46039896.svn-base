@@ -1,0 +1,39 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+
+import com.fastcase.services._2009._03._06.ResearchServicesStub.LibraryDocument;
+import com.fastcase.services._2009._03._06.ResearchServicesStub.LibraryDocumentListItem;
+import com.thinkgem.jeesite.common.utils.FileUtils;
+import com.thinkgem.jeesite.common.utils.RegexUtil;
+import com.thinkgem.jeesite.common.webservice.WBNonCaseUtils;
+
+
+public class Mytest {
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args) throws Exception {
+		SAXReader reader = new SAXReader();
+		Document dom = reader.read(new File("C:/Users/Chad/Desktop/Connecticut/Volume 003.xml"));
+		Element root = dom.getRootElement();
+		List<Element> list1 = root.selectNodes("Indexes//Index[@Level=3]");
+		for(Element el1:list1){
+			List<Element> list2 = el1.selectNodes("Indexes//Index[@Level=4]");
+			List<Element> els = new ArrayList<Element>();
+			for(Element el2:list2){
+				el2.attributeValue("Level", "1");
+				el2.addAttribute("IsUpdateFromAct", "0");
+				els.add(el2);
+			}
+			root.element("Indexes").clearContent();
+			root.element("Indexes").setContent(els);
+			FileUtils.writeStringToFile(new File("C:/Users/Chad/Desktop/export/"+el1.elementText("Caption")+".xml"), dom.asXML());
+			System.out.println(el1.elementText("Caption"));
+		}
+	}
+}

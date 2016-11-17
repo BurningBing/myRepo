@@ -1,0 +1,119 @@
+package com.thinkgem.jeesite.common.websocket;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.activiti.engine.impl.util.json.JSONObject;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.WebSocketMessage;
+import org.springframework.web.socket.WebSocketSession;
+
+import com.thinkgem.jeesite.common.utils.SpringBeanUtils;
+import com.thinkgem.jeesite.modules.ats.entity.AtsMessage;
+import com.thinkgem.jeesite.modules.ats.service.AtsMessageService;
+
+public class GlobalHandler implements WebSocketHandler{
+	public static List<WebSocketSession> sessions = new ArrayList<WebSocketSession>();
+	
+	/**
+	 * 链接建立成功之后
+	 */
+	@Override
+	public void afterConnectionEstablished(WebSocketSession session)throws Exception {
+		String userName = (String) session.getHandshakeAttributes().get("userName");
+		if(userName!=null){
+//			nonCaseA2sMessageService = (NonCaseA2sMessageService) SpringBeanUtils.getBean("nonCaseA2sMessageService");
+			//记录登录操作
+			// 查询Message表，查看是否有消息数据
+//			List<NonCaseA2sMessage> list = nonCaseA2sMessageService.getMyMessage(userName);
+//			if(list.size()>0){
+//				JSONObject messageJson = new JSONObject();
+//				messageJson.put("type", "message");
+//				session.sendMessage(new TextMessage(messageJson.toString()));
+//			}
+//			LogUtils.insertLog("login", userName+"登录Act To Statute双打系统.",userName);
+			sessions.add(session);
+			System.out.println(userName+" 上线");
+			System.out.println("当前在线人数："+sessions.size());
+		}
+	}
+
+	@Override
+	public void handleMessage(WebSocketSession session,WebSocketMessage<?> message) throws Exception {
+			
+	}
+
+	@Override
+	public void handleTransportError(WebSocketSession session,Throwable exception) throws Exception {
+		
+	}
+	
+	public static void sendMessage(String receiver,String content,String sender){
+		for(WebSocketSession session:sessions){
+			if(receiver.equals(session.getHandshakeAttributes().get("userName"))){
+				try {
+					JSONObject json = new JSONObject();
+					json.put("sender", sender);
+					json.put("method", "receiveMessage");
+					json.put("content", content);
+					session.sendMessage(new TextMessage(json.toString()));
+				} catch (IOException e) {
+					System.out.println("消息发送失败");
+				}
+			}
+		}
+	}
+	
+	public static void invokeJsMethod(String receiver,String method,String data){
+		for(WebSocketSession session:sessions){
+			if(receiver.equals(session.getHandshakeAttributes().get("userName"))){
+				try {
+					JSONObject json = new JSONObject();
+					json.put("method", method);
+					json.put("data", data);
+					session.sendMessage(new TextMessage(json.toString()));
+				} catch (IOException e) {
+					System.out.println("消息发送失败");
+				}
+			}
+		}
+	}
+	
+	
+
+	@Override
+	public void afterConnectionClosed(WebSocketSession session,CloseStatus closeStatus) throws Exception {
+		String userName = (String) session.getHandshakeAttributes().get("userName");
+		if(userName!=null){
+			//添加操作记录
+//			LogUtils.insertLog("logout", userName+"退出系统",userName);
+			//退出系统，清除Session.
+			System.out.println(userName+"退出系统...");
+			sessions.remove(session);
+			System.out.println("当前在线人数："+sessions.size());
+		}
+	}
+
+	@Override
+	public boolean supportsPartialMessages() {
+		return false;
+	}
+
+	public static void afterSignUp(int count,String state){
+		JSONObject json = new JSONObject();
+		json.put("method", "afterSignUp");
+		for(WebSocketSession session:sessions){
+			try {
+				json.put("count", count);
+				json.put("state", state);
+				session.sendMessage(new TextMessage(json.toString()));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+}

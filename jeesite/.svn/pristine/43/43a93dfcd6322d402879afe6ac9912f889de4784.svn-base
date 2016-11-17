@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsFeedbackDao">
+    
+	<sql id="atsFeedbackColumns">
+		a.id AS "id",
+		a.act_id AS "actId",
+		a.section_id AS "sectionId",
+		a.editor AS "editor",
+		a.type AS "type",
+		a.status AS "status",
+		a.content AS "content",
+		a.day AS "day",
+		a.checker AS "checker"
+	</sql>
+	
+	<sql id="atsFeedbackJoins">
+	</sql>
+    
+	<select id="get" resultType="AtsFeedback">
+		SELECT 
+			<include refid="atsFeedbackColumns"/>
+		FROM ats_feedback a
+		<include refid="atsFeedbackJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AtsFeedback">
+		SELECT 
+			<include refid="atsFeedbackColumns"/>
+		FROM ats_feedback a
+		<include refid="atsFeedbackJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AtsFeedback">
+		SELECT 
+			<include refid="atsFeedbackColumns"/>
+		FROM ats_feedback a
+		<include refid="atsFeedbackJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO ats_feedback(
+			id,
+			act_id,
+			section_id,
+			editor,
+			type,
+			status,
+			content,
+			day,
+			checker
+		) VALUES (
+			seq_feedback.nextval,
+			#{actId},
+			#{sectionId},
+			#{editor},
+			#{type},
+			#{status},
+			#{content},
+			#{day},
+			#{checker}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_feedback SET 	
+			act_id = #{actId},
+			section_id = #{sectionId},
+			editor = #{editor},
+			type = #{type},
+			status = #{status},
+			content = #{content},
+			day = #{day},
+			checker = #{checker}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM ats_feedback
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

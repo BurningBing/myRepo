@@ -1,0 +1,54 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.List;
+
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
+
+import com.fastcase.services._2009._03._06.ResearchServicesStub.LibraryDocumentListItem;
+import com.thinkgem.jeesite.common.webservice.WBNonCaseUtils;
+
+public class Temp {
+	public static void main(String[] args) throws Exception {
+		File file = new File("C:/Users/Chad/Desktop/Connecticut/Volume 003.xml");
+		SAXReader reader = new SAXReader();
+		Document dom = reader.read(file);
+		Element root = dom.getRootElement();
+		List<?> list = root.selectNodes("Indexes//ShortName");
+		for(int i=0;i<list.size();i++){
+			Element el = (Element) list.get(i);
+			LibraryDocumentListItem[] libs = WBNonCaseUtils.findNonCaseByShortName(el.getText());
+			if(libs==null){
+				System.out.println(el.getText()+"+++不存在+++");
+			}else{
+				if(libs[0].getCitation().equals(el.getText())){
+					System.out.println(el.getText()+"存在");
+					el.getParent().remove(el);
+				}else{
+					System.out.println(el.getText()+"+++不存在+++");
+				}
+			}
+		}
+		OutputFormat format = new OutputFormat("  ",true);
+		format.setEncoding("utf-8");
+		format.setNewlines(true);
+		XMLWriter xmlWriter;
+		File exportFile = new File("E://volume 3-0.xml");
+		try {
+			if(!exportFile.getParentFile().exists()){
+				exportFile.getParentFile().mkdirs();
+			}
+			xmlWriter = new XMLWriter(new FileOutputStream(exportFile),format);
+			xmlWriter.write(dom);
+			xmlWriter.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("done");
+	}
+}

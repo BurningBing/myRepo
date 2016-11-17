@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.ats.dao.AtsStatuteDao">
+    
+	<sql id="atsStatuteColumns">
+		a.id AS "id",
+		a.state AS "state",
+		a.edition_id AS "editionId",
+		a.library_name AS "libraryName",
+		a.library_edition AS "libraryEdition",
+		a.library_const AS "libraryConst",
+		a.edition_date AS "editionDate"
+	</sql>
+	
+	<sql id="atsStatuteJoins">
+	</sql>
+    
+	<select id="get" resultType="AtsStatute">
+		SELECT 
+			<include refid="atsStatuteColumns"/>
+		FROM ats_statute a
+		<include refid="atsStatuteJoins"/>
+		<where>
+			<if test="id!=null and id!=''">
+				AND a.id = #{id}
+			</if>
+			<if test="state!=null and state!=''">
+				AND a.state = #{state}
+			</if>
+		</where>
+	</select>
+	
+	<select id="findList" resultType="AtsStatute">
+		SELECT 
+			<include refid="atsStatuteColumns"/>
+		FROM ats_statute a
+		<include refid="atsStatuteJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AtsStatute">
+		SELECT 
+			<include refid="atsStatuteColumns"/>
+		FROM ats_statute a
+		<include refid="atsStatuteJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findStatuteByState" resultType = "AtsStatute">
+		SELECT * FROM ATS_STATUTE WHERE STATE = #{state}
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO ats_statute(
+			id,
+			state,
+			edition_id,
+			library_name,
+			library_edition,
+			library_const,
+			edition_date
+		) VALUES (
+			#{id},
+			#{state},
+			#{editionId},
+			#{libraryName},
+			#{libraryEdition},
+			#{libraryConst},
+			#{editionDate}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE ats_statute SET 	
+			state = #{state},
+			edition_id = #{editionId},
+			library_name = #{libraryName},
+			library_edition = #{libraryEdition},
+			library_const = #{libraryConst},
+			edition_date = #{editionDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM ats_statute
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

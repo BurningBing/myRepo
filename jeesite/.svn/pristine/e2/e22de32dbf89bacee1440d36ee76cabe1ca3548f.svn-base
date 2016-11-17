@@ -1,0 +1,25 @@
+package com.thinkgem.jeesite.test;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import com.thinkgem.jeesite.backup.CompareUtils;
+
+public class TestList {
+	public static void main(String[] args) {
+		CompareUtils cu = new CompareUtils("C:\\ATS\\HTML\\20160408\\Idaho\\张睿\\S1302(1).html", "C:\\ATS\\HTML\\20160408\\Idaho\\霍旭红\\S1302(1).html");
+		List<String> list = new ArrayList<String>();
+		list.add("a1");
+		list.add("a2");
+		CompareUtils.MyIterator m = cu.new MyIterator(list);
+		Iterator<String> iterator = m.getIterator();
+		int i=0;
+		while(iterator.hasNext()){
+			if(i==0){
+				m.getList().add("a3");
+			}
+			System.out.println(iterator.next());
+		}
+	}
+}

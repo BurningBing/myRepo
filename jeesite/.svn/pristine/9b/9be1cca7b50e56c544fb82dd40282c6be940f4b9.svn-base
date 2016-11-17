@@ -1,0 +1,21 @@
+package com.thinkgem.jeesite.test;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.thinkgem.jeesite.tools.JDBCUtils;
+
+
+public class JDBCTest {
+	public static void main(String[] args) throws SQLException {
+		String userNmae = "Zhangliuna";
+		String sql = "select password from sys_user where login_name = ?";
+		
+		
+		ResultSet rs = JDBCUtils.query("select password from sys_user where login_name = 'Sunlina'");
+		while(rs.next()){
+			System.out.println(rs.getString(1));
+		}
+		JDBCUtils.close();
+	}
+}

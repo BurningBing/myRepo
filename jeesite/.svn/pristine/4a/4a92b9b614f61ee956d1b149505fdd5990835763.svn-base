@@ -1,0 +1,33 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.jsoup.Connection;
+import org.jsoup.Connection.Response;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+
+public class TestPerma {
+	public static void main(String[] args) throws IOException {
+		String user = "dletz@fastcase.com";
+		String password = "fastcase";
+		
+		String url = "https://perma.cc/login";
+		
+		Response response = Jsoup.connect(url).header("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2").timeout(20000).execute();
+		Map<String, String> cookies = response.cookies();
+		System.out.println(cookies);
+//		Document dom = response.parse(); 
+//		Map<String, String> data = new HashMap<String, String>();
+//		
+//		data.put("csrfmiddlewaretoken", dom.select("input[name=csrfmiddlewaretoken]").first().val());
+//		data.put("username", user);
+//		data.put("password", password);
+//		dom = Jsoup.connect(url).data(data).cookies(cookies).header("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2").timeout(100000).post();
+//		System.out.println(dom.html());
+	}
+
+}

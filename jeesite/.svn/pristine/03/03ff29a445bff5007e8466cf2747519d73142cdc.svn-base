@@ -1,0 +1,15 @@
+package com.thinkgem.jeesite.test;
+
+import java.io.File;
+import java.io.IOException;
+
+import com.thinkgem.jeesite.common.utils.FileUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+
+public class TestRex {
+	public static void main(String[] args) throws IOException {
+		File file = new File("C:\\ATS\\HTML\\20160408\\Idaho\\霍旭红\\S1302(4).html");
+		String html = StringUtils.formatCompareHtml(FileUtils.readFileToString(file));
+		System.out.println(html);
+	}
+}
